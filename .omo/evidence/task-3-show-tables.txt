@@ -1,0 +1,17 @@
+﻿cmd : mysql: [Warning] Using a password on the command line interface can be insecure.
+所在位置 行:1 字符: 98
++ ... | Out-Null; cmd /c 'mysql -u root -p1234 -e "USE forest_resource; SHO ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (mysql: [Warning...an be insecure.:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+Tables_in_forest_resource
+ai_prediction
+model
+operation_log
+plot
+region
+species
+tree
+user
+volume
