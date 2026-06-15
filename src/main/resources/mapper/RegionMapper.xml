@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="edu.hznu.forest.mapper.RegionMapper">
+
+    <select id="findAll" resultType="Region">
+        SELECT * FROM region
+    </select>
+
+    <select id="findById" resultType="Region">
+        SELECT * FROM region WHERE region_id = #{id}
+    </select>
+
+    <select id="findByParentId" resultType="Region">
+        SELECT * FROM region WHERE parent_id = #{parentId}
+    </select>
+
+    <select id="findByName" resultType="Region">
+        SELECT * FROM region WHERE name = #{name}
+    </select>
+
+    <insert id="insert" parameterType="Region" useGeneratedKeys="true" keyProperty="regionId">
+        INSERT INTO region(region_code, name, parent_id, level)
+        VALUES(#{regionCode}, #{name}, #{parentId}, #{level})
+    </insert>
+
+    <update id="update" parameterType="Region">
+        UPDATE region
+        SET region_code = #{regionCode},
+            name = #{name},
+            parent_id = #{parentId},
+            level = #{level}
+        WHERE region_id = #{regionId}
+    </update>
+
+    <delete id="delete">
+        DELETE FROM region WHERE region_id = #{id}
+    </delete>
+
+</mapper>

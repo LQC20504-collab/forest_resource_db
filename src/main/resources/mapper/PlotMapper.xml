@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="edu.hznu.forest.mapper.PlotMapper">
+
+    <select id="findAll" resultType="Plot">
+        SELECT p.*,
+               (SELECT COUNT(*) FROM tree WHERE plot_id = p.plot_id) AS tree_count
+        FROM plot p
+    </select>
+
+    <select id="findById" resultType="Plot">
+        SELECT * FROM plot WHERE plot_id = #{id}
+    </select>
+
+    <select id="findByRegionId" resultType="Plot">
+        SELECT * FROM plot WHERE region_id = #{regionId}
+    </select>
+
+    <select id="findAllPlotIds" resultType="long">
+        SELECT plot_id FROM plot ORDER BY plot_id
+    </select>
+
+    <select id="findByPlotCode" resultType="Plot">
+        SELECT * FROM plot WHERE plot_code = #{plotCode}
+    </select>
+
+    <insert id="insert" parameterType="Plot" useGeneratedKeys="true" keyProperty="plotId">
+        INSERT INTO plot(plot_code, region_id, latitude, longitude, elevation, area, survey_year, plot_type, description)
+        VALUES(#{plotCode}, #{regionId}, #{latitude}, #{longitude}, #{elevation}, #{area}, #{surveyYear}, #{plotType}, #{description})
+    </insert>
+
+    <update id="update" parameterType="Plot">
+        UPDATE plot
+        SET plot_code = #{plotCode},
+            region_id = #{regionId},
+            latitude = #{latitude},
+            longitude = #{longitude},
+            elevation = #{elevation},
+            area = #{area},
+            survey_year = #{surveyYear},
+            plot_type = #{plotType},
+            description = #{description}
+        WHERE plot_id = #{plotId}
+    </update>
+
+    <delete id="delete">
+        DELETE FROM plot WHERE plot_id = #{id}
+    </delete>
+
+</mapper>

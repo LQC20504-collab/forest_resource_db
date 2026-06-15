@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="edu.hznu.forest.mapper.TreeMapper">
+
+    <resultMap id="treeResultMap" type="edu.hznu.forest.entity.Tree">
+        <id property="treeId" column="tree_id"/>
+        <result property="plotId" column="plot_id"/>
+        <result property="speciesId" column="species_id"/>
+        <result property="treeNumber" column="tree_number"/>
+        <result property="dbh" column="dbh"/>
+        <result property="height" column="height"/>
+        <result property="age" column="age"/>
+        <result property="healthStatus" column="health_status"/>
+        <result property="speciesName" column="speciesName"/>
+    </resultMap>
+
+    <select id="findByPlotId" resultMap="treeResultMap">
+        SELECT t.*, s.common_name AS speciesName
+        FROM tree t
+        LEFT JOIN species s ON t.species_id = s.species_id
+        WHERE t.plot_id = #{plotId}
+    </select>
+
+    <select id="findById" resultMap="treeResultMap">
+        SELECT t.*, s.common_name AS speciesName
+        FROM tree t
+        LEFT JOIN species s ON t.species_id = s.species_id
+        WHERE t.tree_id = #{id}
+    </select>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="treeId">
+        INSERT INTO tree (plot_id, species_id, tree_number, dbh, height, age, health_status)
+        VALUES (#{plotId}, #{speciesId}, #{treeNumber}, #{dbh}, #{height}, #{age}, #{healthStatus})
+    </insert>
+
+    <update id="update">
+        UPDATE tree
+        SET plot_id = #{plotId},
+            species_id = #{speciesId},
+            tree_number = #{treeNumber},
+            dbh = #{dbh},
+            height = #{height},
+            age = #{age},
+            health_status = #{healthStatus}
+        WHERE tree_id = #{treeId}
+    </update>
+
+    <delete id="delete">
+        DELETE FROM tree WHERE tree_id = #{id}
+    </delete>
+
+</mapper>

@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI森林资源调查系统 - 登录</title>
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    /* --- Page-specific styles --- */
+
+    /* Full-page forest atmosphere */
+    .login-page {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      background:
+        radial-gradient(ellipse at 20% 50%, rgba(44, 110, 73, 0.06) 0%, transparent 50%),
+        radial-gradient(ellipse at 80% 20%, rgba(76, 149, 108, 0.05) 0%, transparent 50%),
+        linear-gradient(180deg, #f4f6f4 0%, #edf1ed 100%);
+    }
+
+    /* Navbar — minimal, transparent blend */
+    .login-page .navbar {
+      background: rgba(27, 67, 50, 0.92);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      box-shadow: 0 1px 8px rgba(0, 0, 0, 0.06);
+    }
+
+    /* Main content area */
+    .login-main {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: var(--space-8) var(--space-6);
+    }
+
+    /* Card container */
+    .login-card {
+      width: 100%;
+      max-width: 400px;
+      animation: cardEnter 0.5s ease-out both;
+    }
+
+    @keyframes cardEnter {
+      from {
+        opacity: 0;
+        transform: translateY(24px) scale(0.97);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+    }
+
+    /* Card header with accent bar */
+    .login-card .card {
+      border-top: 3px solid var(--color-primary);
+      box-shadow: var(--shadow-lg);
+    }
+
+    .login-card .card-header {
+      text-align: center;
+      padding: var(--space-8) var(--space-6) var(--space-3);
+      border-bottom: none;
+    }
+
+    .login-card .card-header .login-icon {
+      width: 52px;
+      height: 52px;
+      margin: 0 auto var(--space-4);
+      background: linear-gradient(135deg, var(--color-primary), var(--color-primary-light));
+      border-radius: var(--radius-lg);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem;
+      color: #ffffff;
+      box-shadow: 0 4px 14px rgba(44, 110, 73, 0.25);
+    }
+
+    .login-card .card-header h2 {
+      font-size: 1.35rem;
+      font-weight: 700;
+      color: var(--color-primary-dark);
+      margin-bottom: var(--space-1);
+    }
+
+    .login-card .card-header .subtitle {
+      font-size: 0.85rem;
+      color: var(--color-text-muted);
+    }
+
+    .login-card .card-body {
+      padding: var(--space-3) var(--space-8) var(--space-8);
+    }
+
+    /* Alert positioning */
+    .login-card .alert {
+      margin-bottom: var(--space-5);
+    }
+
+    /* Submit button */
+    .login-card .btn-submit {
+      margin-top: var(--space-3);
+      padding: var(--space-3) var(--space-6);
+      font-size: 1rem;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+    }
+
+    /* Toggle link row */
+    .toggle-row {
+      text-align: center;
+      margin-top: var(--space-5);
+      font-size: 0.88rem;
+      color: var(--color-text-secondary);
+    }
+
+    .toggle-row .toggle-link {
+      color: var(--color-primary);
+      font-weight: 600;
+      cursor: pointer;
+      transition: all var(--transition-fast);
+    }
+
+    .toggle-row .toggle-link:hover {
+      color: var(--color-primary-dark);
+      text-decoration: underline;
+      text-underline-offset: 3px;
+    }
+
+    /* Footer */
+    .login-footer {
+      text-align: center;
+      padding: var(--space-4) var(--space-6);
+      font-size: 0.78rem;
+      color: var(--color-text-muted);
+    }
+
+    /* Responsive */
+    @media (max-width: 480px) {
+      .login-card .card-body {
+        padding: var(--space-3) var(--space-5) var(--space-6);
+      }
+      .login-card .card-header {
+        padding: var(--space-6) var(--space-5) var(--space-2);
+      }
+    }
+  </style>
+</head>
+<body class="login-page">
+
+  <!-- Minimal Navbar -->
+  <nav class="navbar">
+    <a href="login.html" class="navbar-brand">
+      <span class="logo-icon">&#9730;</span>
+      <span>AI森林资源调查系统</span>
+    </a>
+  </nav>
+
+  <!-- Login Card -->
+  <main class="login-main">
+    <div class="login-card">
+      <div class="card">
+        <div class="card-header">
+          <div class="login-icon">&#9730;</div>
+          <h2 id="formTitle">账号登录</h2>
+          <p class="subtitle" id="formSubtitle">请输入您的用户名和密码</p>
+        </div>
+
+        <div class="card-body">
+          <!-- Error / Success Alert -->
+          <div class="alert" id="alertBox"></div>
+
+          <!-- Login / Register Form -->
+          <form id="authForm" novalidate>
+            <div class="form-group">
+              <label for="username">用户名</label>
+              <input
+                type="text"
+                id="username"
+                class="form-control"
+                placeholder="请输入用户名"
+                autocomplete="username"
+                required
+                minlength="3"
+                maxlength="50"
+                title="3-50个字符，字母、数字或下划线"
+              >
+              <div class="form-hint error" id="usernameHint"></div>
+            </div>
+
+            <div class="form-group">
+              <label for="password">密码</label>
+              <input
+                type="password"
+                id="password"
+                class="form-control"
+                placeholder="请输入密码"
+                autocomplete="current-password"
+                required
+                minlength="6"
+                maxlength="50"
+                title="至少6个字符"
+              >
+              <div class="form-hint error" id="passwordHint"></div>
+            </div>
+
+            <!-- Confirm password (register mode only) -->
+            <div class="form-group hidden" id="confirmGroup">
+              <label for="confirmPassword">确认密码</label>
+              <input
+                type="password"
+                id="confirmPassword"
+                class="form-control"
+                placeholder="请再次输入密码"
+                autocomplete="new-password"
+                title="请再次输入密码以确认"
+              >
+              <div class="form-hint error" id="confirmHint"></div>
+            </div>
+
+            <button type="submit" class="btn btn-primary btn-block btn-submit" id="submitBtn">
+              登 录
+            </button>
+          </form>
+
+          <!-- Toggle Login / Register -->
+          <div class="toggle-row">
+            <span id="toggleText">还没有账号？</span>
+            <span class="toggle-link" id="toggleLink" tabindex="0" role="button">立即注册</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Footer -->
+      <p class="login-footer">&copy; 2026 AI森林资源调查系统 · 数据库原理与应用课程项目</p>
+    </div>
+  </main>
+
+  <script>
+    (function() {
+      'use strict';
+
+      /* ========== State ========== */
+      var isLoginMode = true;
+
+      /* ========== DOM Refs ========== */
+      var $form          = document.getElementById('authForm');
+      var $formTitle     = document.getElementById('formTitle');
+      var $formSubtitle  = document.getElementById('formSubtitle');
+      var $alertBox      = document.getElementById('alertBox');
+      var $submitBtn     = document.getElementById('submitBtn');
+      var $toggleText    = document.getElementById('toggleText');
+      var $toggleLink    = document.getElementById('toggleLink');
+      var $confirmGroup  = document.getElementById('confirmGroup');
+      var $confirmInput  = document.getElementById('confirmPassword');
+
+      var $username      = document.getElementById('username');
+      var $password      = document.getElementById('password');
+      var $usernameHint  = document.getElementById('usernameHint');
+      var $passwordHint  = document.getElementById('passwordHint');
+      var $confirmHint   = document.getElementById('confirmHint');
+
+      /* ========== Alert ========== */
+      function showAlert(type, message) {
+        $alertBox.className = 'alert visible alert-' + type;
+        $alertBox.textContent = message;
+      }
+
+      function hideAlert() {
+        $alertBox.className = 'alert';
+        $alertBox.textContent = '';
+      }
+
+      /* ========== Form hints ========== */
+      function clearHints() {
+        $usernameHint.textContent = '';
+        $passwordHint.textContent = '';
+        $confirmHint.textContent = '';
+        $username.classList.remove('form-error');
+        $password.classList.remove('form-error');
+        $confirmInput.classList.remove('form-error');
+      }
+
+      /* ========== Validation ========== */
+      function validate() {
+        var valid = true;
+        clearHints();
+        hideAlert();
+
+        var username = $username.value.trim();
+        var password = $password.value;
+
+        if (!username) {
+          $usernameHint.textContent = '请输入用户名';
+          $username.classList.add('form-error');
+          valid = false;
+        } else if (username.length < 3) {
+          $usernameHint.textContent = '用户名至少3个字符';
+          $username.classList.add('form-error');
+          valid = false;
+        }
+
+        if (!password) {
+          $passwordHint.textContent = '请输入密码';
+          $password.classList.add('form-error');
+          valid = false;
+        } else if (password.length < 6) {
+          $passwordHint.textContent = '密码至少6个字符';
+          $password.classList.add('form-error');
+          valid = false;
+        }
+
+        /* Register mode: confirm password */
+        if (!isLoginMode) {
+          var confirm = $confirmInput.value;
+          if (!confirm) {
+            $confirmHint.textContent = '请确认密码';
+            $confirmInput.classList.add('form-error');
+            valid = false;
+          } else if (confirm !== password) {
+            $confirmHint.textContent = '两次输入的密码不一致';
+            $confirmInput.classList.add('form-error');
+            valid = false;
+          }
+        }
+
+        return valid;
+      }
+
+      /* ========== Loading state ========== */
+      function setLoading(loading) {
+        if (loading) {
+          $submitBtn.disabled = true;
+          $submitBtn.innerHTML = '<span class="spinner"></span> 处理中...';
+        } else {
+          $submitBtn.disabled = false;
+          $submitBtn.textContent = isLoginMode ? '登 录' : '注 册';
+        }
+      }
+
+      /* ========== API Call ========== */
+      function doLogin(username, password) {
+        setLoading(true);
+        hideAlert();
+
+        fetch('/api/auth/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username: username, password: password })
+        })
+        .then(function(res) { return res.json(); })
+        .then(function(data) {
+          setLoading(false);
+          if (data.code === 200 && data.data) {
+            /* Success: store JWT, redirect */
+            localStorage.setItem('jwt_token', data.data);
+            localStorage.setItem('username', username);
+            window.location.href = 'dashboard.html';
+          } else {
+            showAlert('error', data.message || '登录失败，请检查用户名和密码');
+          }
+        })
+        .catch(function(err) {
+          setLoading(false);
+          showAlert('error', '网络错误，无法连接服务器');
+          console.error('Login error:', err);
+        });
+      }
+
+      function doRegister(username, password) {
+        setLoading(true);
+        hideAlert();
+
+        fetch('/api/auth/register', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username: username, password: password })
+        })
+        .then(function(res) { return res.json(); })
+        .then(function(data) {
+          setLoading(false);
+          if (data.code === 200) {
+            showAlert('success', '注册成功！请登录');
+            /* Auto-switch to login mode */
+            setTimeout(function() {
+              switchToLogin();
+            }, 1200);
+          } else {
+            showAlert('error', data.message || '注册失败，请重试');
+          }
+        })
+        .catch(function(err) {
+          setLoading(false);
+          showAlert('error', '网络错误，无法连接服务器');
+          console.error('Register error:', err);
+        });
+      }
+
+      /* ========== Mode Switching ========== */
+      function switchToRegister() {
+        isLoginMode = false;
+        $formTitle.textContent = '账号注册';
+        $formSubtitle.textContent = '创建新账号以使用系统';
+        $submitBtn.textContent = '注 册';
+        $toggleText.textContent = '已有账号？';
+        $toggleLink.textContent = '返回登录';
+        $confirmGroup.classList.remove('hidden');
+        clearHints();
+        hideAlert();
+      }
+
+      function switchToLogin() {
+        isLoginMode = true;
+        $formTitle.textContent = '账号登录';
+        $formSubtitle.textContent = '请输入您的用户名和密码';
+        $submitBtn.textContent = '登 录';
+        $toggleText.textContent = '还没有账号？';
+        $toggleLink.textContent = '立即注册';
+        $confirmGroup.classList.add('hidden');
+        $confirmInput.value = '';
+        clearHints();
+        hideAlert();
+      }
+
+      /* ========== Event Listeners ========== */
+      $form.addEventListener('submit', function(e) {
+        e.preventDefault();
+        if (!validate()) return;
+
+        var username = $username.value.trim();
+        var password = $password.value;
+
+        if (isLoginMode) {
+          doLogin(username, password);
+        } else {
+          doRegister(username, password);
+        }
+      });
+
+      $toggleLink.addEventListener('click', function() {
+        if (isLoginMode) {
+          switchToRegister();
+        } else {
+          switchToLogin();
+        }
+      });
+
+      /* Keyboard accessibility */
+      $toggleLink.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          if (isLoginMode) {
+            switchToRegister();
+          } else {
+            switchToLogin();
+          }
+        }
+      });
+
+      /* Clear inline errors on input */
+      $username.addEventListener('input', function() {
+        $usernameHint.textContent = '';
+        $username.classList.remove('form-error');
+      });
+
+      $password.addEventListener('input', function() {
+        $passwordHint.textContent = '';
+        $password.classList.remove('form-error');
+      });
+
+      $confirmInput.addEventListener('input', function() {
+        $confirmHint.textContent = '';
+        $confirmInput.classList.remove('form-error');
+      });
+
+      /* Auto-focus username field */
+      $username.focus();
+
+    })();
+  </script>
+
+</body>
+</html>

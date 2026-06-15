@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="edu.hznu.forest.mapper.SpeciesMapper">
+
+    <select id="findAll" resultType="Species">
+        SELECT * FROM species
+    </select>
+
+    <select id="findById" resultType="Species">
+        SELECT * FROM species WHERE species_id = #{id}
+    </select>
+
+    <select id="findByCommonName" resultType="Species">
+        SELECT * FROM species WHERE common_name = #{commonName}
+    </select>
+
+    <insert id="insert" parameterType="Species" useGeneratedKeys="true" keyProperty="speciesId">
+        INSERT INTO species(common_name, latin_name, wood_density, carbon_coefficient)
+        VALUES(#{commonName}, #{latinName}, #{woodDensity}, #{carbonCoefficient})
+    </insert>
+
+    <update id="update" parameterType="Species">
+        UPDATE species
+        SET common_name = #{commonName},
+            latin_name = #{latinName},
+            wood_density = #{woodDensity},
+            carbon_coefficient = #{carbonCoefficient}
+        WHERE species_id = #{speciesId}
+    </update>
+
+    <delete id="delete">
+        DELETE FROM species WHERE species_id = #{id}
+    </delete>
+
+</mapper>

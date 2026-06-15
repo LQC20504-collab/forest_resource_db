@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="edu.hznu.forest.mapper.AIPredictionMapper">
+
+    <resultMap id="aiPredictionResultMap" type="edu.hznu.forest.entity.AIPrediction">
+        <id property="predId" column="pred_id"/>
+        <result property="plotId" column="plot_id"/>
+        <result property="modelId" column="model_id"/>
+        <result property="predictedVolume" column="predicted_volume"/>
+        <result property="confidence" column="confidence"/>
+        <result property="predictTime" column="predict_time"/>
+    </resultMap>
+
+    <select id="findByPlotId" resultMap="aiPredictionResultMap">
+        SELECT * FROM ai_prediction WHERE plot_id = #{plotId}
+    </select>
+
+    <select id="findByModelId" resultMap="aiPredictionResultMap">
+        SELECT * FROM ai_prediction WHERE model_id = #{modelId}
+    </select>
+
+    <select id="sumPredictedVolumeByPlotIds" resultType="java.math.BigDecimal">
+        SELECT COALESCE(SUM(predicted_volume), 0) FROM ai_prediction
+        WHERE plot_id IN
+        <foreach item="plotId" collection="plotIds" open="(" separator="," close=")">
+            #{plotId}
+        </foreach>
+    </select>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="predId">
+        INSERT INTO ai_prediction (plot_id, model_id, predicted_volume, confidence, predict_time)
+        VALUES (#{plotId}, #{modelId}, #{predictedVolume}, #{confidence}, #{predictTime})
+    </insert>
+
+    <update id="update">
+        UPDATE ai_prediction
+        SET plot_id = #{plotId},
+            model_id = #{modelId},
+            predicted_volume = #{predictedVolume},
+            confidence = #{confidence},
+            predict_time = #{predictTime}
+        WHERE pred_id = #{predId}
+    </update>
+
+    <delete id="delete">
+        DELETE FROM ai_prediction WHERE pred_id = #{id}
+    </delete>
+
+    <delete id="deleteAll">
+        DELETE FROM ai_prediction
+    </delete>
+
+    <delete id="deleteAllOperationLogs">
+        DELETE FROM operation_log WHERE operation = '新增AI预测'
+    </delete>
+
+    <delete id="deleteByPlotIdAndModelId">
+        DELETE FROM ai_prediction WHERE plot_id = #{plotId} AND model_id = #{modelId}
+    </delete>
+
+</mapper>

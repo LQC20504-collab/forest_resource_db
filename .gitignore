@@ -1,0 +1,61 @@
+HELP.md
+target/
+.mvn/wrapper/maven-wrapper.jar
+!**/src/main/**/target/
+!**/src/test/**/target/
+
+### STS ###
+.apt_generated
+.classpath
+.factorypath
+.project
+.settings
+.springBeans
+.sts4-cache
+
+### IntelliJ IDEA ###
+.idea
+*.iws
+*.iml
+*.ipr
+
+### NetBeans ###
+/nbproject/private/
+/nbbuild/
+/dist/
+/nbdist/
+/.nb-gradle/
+build/
+!**/src/main/**/build/
+!**/src/test/**/build/
+
+### VS Code ###
+.vscode/
+
+### Logs ###
+*.log
+logs/
+
+### Test / debug artifacts ###
+api-test-output.json
+region-test.json
+
+### AI research / drafts ###
+deep-research-report*.md
+docx_template.txt
+
+### OpenCode config ###
+.omo/
+
+### Reference papers (not project code) ###
+中国林草遥感技术研究与应用*.md
+基于 Sentinel-1*.md
+基于数据库技术*.md
+基于特征选择和机器学习*.md
+Estimation of Forest Stock Volume*.md
+Forest inventory with high-density*.md
+Regional Forest Volume Estimation*.md
+Remote sensing support for national*.md
+
+### Maven wrapper (keep mvnw, skip jar) ###
+.mvn/wrapper/maven-wrapper.jar

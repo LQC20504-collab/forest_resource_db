@@ -1,0 +1,1138 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>样地管理 — AI森林资源调查数据库</title>
+<style>
+/* ===== DESIGN SYSTEM ===== */
+:root {
+  --color-primary: #2c6e49;
+  --color-primary-light: #3d8b5f;
+  --color-primary-dark: #1e4d33;
+  --color-primary-pale: #e8f2ec;
+  --color-bg: #f7f5f0;
+  --color-surface: #ffffff;
+  --color-text: #1a1a2e;
+  --color-text-secondary: #5a6a5e;
+  --color-text-muted: #8a9a8e;
+  --color-border: #d8d6cd;
+  --color-border-light: #ebe8e0;
+  --color-danger: #c0392b;
+  --color-danger-hover: #a93226;
+  --color-warning: #e67e22;
+  --color-success: #27ae60;
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.06);
+  --shadow-md: 0 4px 12px rgba(0,0,0,0.08);
+  --shadow-lg: 0 8px 24px rgba(0,0,0,0.12);
+  --font-mono: 'SF Mono', 'Cascadia Code', 'Consolas', monospace;
+  --transition: 0.2s ease;
+}
+
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+  background: var(--color-bg);
+  color: var(--color-text);
+  line-height: 1.6;
+  min-height: 100vh;
+}
+
+/* ===== NAVBAR ===== */
+.navbar {
+  background: linear-gradient(135deg, var(--color-primary-dark), var(--color-primary));
+  color: #fff;
+  padding: 0 24px;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-shadow: 0 2px 8px rgba(44,110,73,0.25);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.navbar-brand {
+  font-size: 17px;
+  font-weight: 700;
+  letter-spacing: -0.3px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.navbar-brand .icon {
+  width: 32px;
+  height: 32px;
+  background: rgba(255,255,255,0.15);
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+}
+
+.navbar-links {
+  display: flex;
+  gap: 4px;
+}
+
+.navbar-links a {
+  color: rgba(255,255,255,0.78);
+  text-decoration: none;
+  padding: 8px 16px;
+  border-radius: var(--radius-sm);
+  font-size: 14px;
+  font-weight: 500;
+  transition: all var(--transition);
+}
+
+.navbar-links a:hover {
+  background: rgba(255,255,255,0.12);
+  color: #fff;
+}
+
+.navbar-links a.active {
+  background: rgba(255,255,255,0.18);
+  color: #fff;
+  font-weight: 600;
+}
+
+.navbar-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.btn-logout {
+  background: rgba(255,255,255,0.1);
+  border: 1px solid rgba(255,255,255,0.25);
+  color: #fff;
+  padding: 6px 14px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 500;
+  transition: all var(--transition);
+}
+
+.btn-logout:hover {
+  background: rgba(255,255,255,0.2);
+  border-color: rgba(255,255,255,0.4);
+}
+
+/* ===== MAIN CONTENT ===== */
+.main {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 24px;
+}
+
+.page-header {
+  margin-bottom: 20px;
+}
+
+.page-header h1 {
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--color-text);
+  letter-spacing: -0.5px;
+}
+
+.page-header p {
+  color: var(--color-text-secondary);
+  font-size: 14px;
+  margin-top: 4px;
+}
+
+/* ===== ACTION BAR ===== */
+.action-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+
+.action-bar-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.action-bar-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 18px;
+  border: none;
+  border-radius: var(--radius-sm);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all var(--transition);
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.btn-primary {
+  background: var(--color-primary);
+  color: #fff;
+  box-shadow: var(--shadow-sm);
+}
+
+.btn-primary:hover {
+  background: var(--color-primary-light);
+  box-shadow: var(--shadow-md);
+}
+
+.btn-sm {
+  padding: 5px 12px;
+  font-size: 13px;
+}
+
+.btn-outline {
+  background: transparent;
+  border: 1px solid var(--color-primary);
+  color: var(--color-primary);
+}
+
+.btn-outline:hover {
+  background: var(--color-primary-pale);
+}
+
+.btn-danger-outline {
+  background: transparent;
+  border: 1px solid var(--color-danger);
+  color: var(--color-danger);
+}
+
+.btn-danger-outline:hover {
+  background: #fef2f2;
+}
+
+.btn-ghost {
+  background: transparent;
+  color: var(--color-primary);
+  border: none;
+  padding: 4px 8px;
+}
+
+.btn-ghost:hover {
+  background: var(--color-primary-pale);
+}
+
+.select-wrapper {
+  position: relative;
+}
+
+.select-wrapper select {
+  appearance: none;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  padding: 8px 32px 8px 12px;
+  font-size: 14px;
+  color: var(--color-text);
+  cursor: pointer;
+  min-width: 180px;
+  transition: border-color var(--transition);
+}
+
+.select-wrapper select:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(44,110,73,0.1);
+}
+
+.select-wrapper::after {
+  content: '';
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-25%);
+  border: 5px solid transparent;
+  border-top-color: var(--color-text-muted);
+  pointer-events: none;
+}
+
+/* ===== TABLE ===== */
+.table-container {
+  background: var(--color-surface);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+  overflow: hidden;
+}
+
+.table-wrapper {
+  overflow-x: auto;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+thead {
+  background: #f9f8f4;
+  border-bottom: 2px solid var(--color-border);
+}
+
+thead th {
+  padding: 12px 16px;
+  text-align: left;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+}
+
+tbody td {
+  padding: 14px 16px;
+  font-size: 14px;
+  border-bottom: 1px solid var(--color-border-light);
+  color: var(--color-text);
+}
+
+tbody tr:last-child td {
+  border-bottom: none;
+}
+
+tbody tr:hover {
+  background: var(--color-primary-pale);
+}
+
+td.plot-code {
+  font-family: var(--font-mono);
+  font-weight: 600;
+  color: var(--color-primary-dark);
+}
+
+td.area {
+  font-family: var(--font-mono);
+}
+
+td.actions {
+  display: flex;
+  gap: 4px;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 48px 24px;
+  color: var(--color-text-muted);
+}
+
+.empty-state .empty-icon {
+  font-size: 48px;
+  margin-bottom: 12px;
+  opacity: 0.4;
+}
+
+.empty-state p {
+  font-size: 14px;
+}
+
+/* ===== PAGINATION ===== */
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px;
+  border-top: 1px solid var(--color-border-light);
+}
+
+.pagination-info {
+  font-size: 13px;
+  color: var(--color-text-secondary);
+}
+
+.pagination-controls {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.pagination-btn {
+  padding: 6px 12px;
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  color: var(--color-text);
+  cursor: pointer;
+  transition: all var(--transition);
+  min-width: 36px;
+  text-align: center;
+}
+
+.pagination-btn:hover:not(:disabled) {
+  background: var(--color-primary-pale);
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+}
+
+.pagination-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.pagination-btn.active {
+  background: var(--color-primary);
+  color: #fff;
+  border-color: var(--color-primary);
+  font-weight: 600;
+}
+
+.pagination-ellipsis {
+  padding: 0 4px;
+  color: var(--color-text-muted);
+  font-size: 13px;
+}
+
+/* ===== MODAL ===== */
+.modal-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(26,31,28,0.55);
+  backdrop-filter: blur(2px);
+  z-index: 200;
+  align-items: center;
+  justify-content: center;
+  animation: fadeIn 0.2s ease;
+}
+
+.modal-overlay.active {
+  display: flex;
+}
+
+.modal {
+  background: var(--color-surface);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  max-height: 85vh;
+  overflow-y: auto;
+  width: 640px;
+  max-width: 95vw;
+  animation: slideUp 0.25s ease;
+}
+
+.modal.wide {
+  width: 800px;
+}
+
+.modal-header {
+  padding: 20px 24px 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.modal-header h2 {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.modal-close {
+  width: 32px;
+  height: 32px;
+  border: none;
+  background: none;
+  font-size: 20px;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all var(--transition);
+}
+
+.modal-close:hover {
+  background: #f0eeea;
+  color: var(--color-text);
+}
+
+.modal-body {
+  padding: 20px 24px;
+}
+
+.modal-footer {
+  padding: 0 24px 20px;
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+/* ===== FORM ===== */
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.form-group.full {
+  grid-column: 1 / -1;
+}
+
+.form-group label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  letter-spacing: 0.2px;
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+  padding: 9px 12px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  font-size: 14px;
+  color: var(--color-text);
+  background: #fff;
+  transition: border-color var(--transition);
+  font-family: inherit;
+}
+
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(44,110,73,0.1);
+}
+
+.form-group input.error,
+.form-group select.error {
+  border-color: var(--color-danger);
+}
+
+.form-group textarea {
+  resize: vertical;
+  min-height: 80px;
+}
+
+.field-error {
+  font-size: 12px;
+  color: var(--color-danger);
+  display: none;
+}
+
+.form-group input.error + .field-error,
+.form-group select.error + .field-error {
+  display: block;
+}
+
+/* ===== DETAIL VIEW ===== */
+.detail-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  margin-bottom: 20px;
+}
+
+.detail-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.detail-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.detail-value {
+  font-size: 15px;
+  color: var(--color-text);
+  font-weight: 500;
+}
+
+.detail-value.code {
+  font-family: var(--font-mono);
+  color: var(--color-primary-dark);
+}
+
+.detail-section-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--color-primary);
+  margin: 20px 0 12px;
+  padding-bottom: 8px;
+  border-bottom: 2px solid var(--color-primary-pale);
+}
+
+.tree-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.tree-table thead {
+  background: #f9f8f4;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.tree-table thead th {
+  padding: 8px 12px;
+  text-align: left;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.tree-table tbody td {
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--color-border-light);
+  font-size: 13px;
+}
+
+.tree-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.tree-table .btn-xs {
+  padding: 2px 8px;
+  font-size: 11px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all var(--transition);
+}
+.tree-table .btn-xs.btn-edit {
+  background: transparent;
+  color: var(--color-primary);
+  border-color: var(--color-primary);
+}
+.tree-table .btn-xs.btn-edit:hover {
+  background: var(--color-primary);
+  color: #fff;
+}
+.tree-table .btn-xs.btn-del {
+  background: transparent;
+  color: var(--color-danger);
+  border-color: var(--color-danger);
+}
+.tree-table .btn-xs.btn-del:hover {
+  background: var(--color-danger);
+  color: #fff;
+}
+
+/* ===== TOAST ===== */
+.toast-container {
+  position: fixed;
+  top: 72px;
+  right: 24px;
+  z-index: 300;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.toast {
+  padding: 12px 20px;
+  border-radius: var(--radius-md);
+  font-size: 14px;
+  font-weight: 500;
+  box-shadow: var(--shadow-lg);
+  animation: slideIn 0.3s ease;
+  max-width: 380px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.toast-success {
+  background: #ecfdf5;
+  color: #065f46;
+  border: 1px solid #a7f3d0;
+}
+
+.toast-error {
+  background: #fef2f2;
+  color: #991b1b;
+  border: 1px solid #fecaca;
+}
+
+.toast-warning {
+  background: #fffbeb;
+  color: #92400e;
+  border: 1px solid #fde68a;
+}
+
+/* ===== LOADING SPINNER ===== */
+.spinner {
+  width: 20px;
+  height: 20px;
+  border: 2.5px solid var(--color-border);
+  border-top-color: var(--color-primary);
+  border-radius: 50%;
+  animation: spin 0.6s linear infinite;
+  display: inline-block;
+}
+
+.loading-row td {
+  text-align: center;
+  padding: 32px;
+}
+
+/* ===== ANIMATIONS ===== */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slideIn {
+  from { opacity: 0; transform: translateX(30px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ===========================================
+   Tooltip / Help Text Utilities
+   =========================================== */
+
+/* Small help text below a control or section */
+.help-text {
+  font-size: 0.78rem;
+  color: var(--color-text-muted);
+  line-height: 1.5;
+  margin-top: var(--space-1);
+}
+.help-text--inline {
+  display: inline;
+  margin-left: var(--space-2);
+}
+.help-text--block {
+  display: block;
+  margin-top: var(--space-2);
+}
+
+/* Info icon with hover tooltip (CSS-only) */
+.tip-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--color-text-muted);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  cursor: help;
+  position: relative;
+  margin-left: var(--space-1);
+  vertical-align: middle;
+  flex-shrink: 0;
+  user-select: none;
+}
+.tip-icon::after {
+  content: attr(data-tip);
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--color-primary-dark);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 400;
+  padding: 6px 12px;
+  border-radius: 6px;
+  white-space: nowrap;
+  max-width: 260px;
+  white-space: normal;
+  line-height: 1.4;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s;
+  z-index: 100;
+}
+.tip-icon:hover::after {
+  opacity: 1;
+}
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 768px) {
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .action-bar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .navbar {
+    padding: 0 12px;
+  }
+
+  .navbar-links a {
+    padding: 6px 10px;
+    font-size: 13px;
+  }
+
+  .main {
+    padding: 16px;
+  }
+
+  .modal {
+    width: 100%;
+    max-width: 100%;
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+    max-height: 90vh;
+  }
+}
+</style>
+</head>
+<body>
+
+<!-- ===== NAVBAR ===== -->
+<nav class="navbar">
+  <div class="navbar-brand">
+    <div class="icon">&#127795;</div>
+    <span>森林资源调查</span>
+  </div>
+  <div class="navbar-links">
+    <a href="dashboard.html">仪表盘</a>
+    <a href="plots.html" class="active">样地管理</a>
+    <a href="statistics.html">分区统计</a>
+  </div>
+  <div class="navbar-right">
+    <button class="btn-logout" onclick="handleLogout()">退出登录</button>
+  </div>
+</nav>
+
+<!-- ===== MAIN ===== -->
+<main class="main">
+  <div class="page-header">
+    <h1>样地管理</h1>
+    <p>管理森林调查样地数据 — 新建、编辑、查看和删除样地信息</p>
+  </div>
+
+  <!-- Action Bar -->
+  <div class="action-bar">
+    <div class="action-bar-left">
+      <button class="btn btn-primary" onclick="openCreateModal()" title="打开表单，录入一个新的调查样地">
+        <span>+</span> 新建样地
+      </button>
+      <button class="btn btn-outline" onclick="openBatchPlotModal()" title="通过粘贴CSV格式数据，一次性导入多个样地">
+        📋 批量导入
+      </button>
+    </div>
+    <span class="help-text help-text--inline" style="margin-left:8px;">管理森林调查样地 — 新建单个样地或批量导入</span>
+    <div class="action-bar-right">
+      <div class="select-wrapper">
+        <select id="regionFilter" onchange="onRegionFilterChange()" title="筛选特定行政区域的样地数据">
+          <option value="">全部区域</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <!-- Table -->
+  <div class="table-container">
+    <div class="table-wrapper">
+      <table>
+        <thead>
+          <tr>
+            <th>样地编号</th>
+            <th>区域</th>
+            <th>面积 (ha)</th>
+            <th>调查年份</th>
+            <th>树木数</th>
+            <th>样地类型</th>
+            <th>操作</th>
+          </tr>
+        </thead>
+        <tbody id="plotTableBody">
+          <tr class="loading-row">
+            <td colspan="7">
+              <div class="spinner"></div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Pagination -->
+    <div class="pagination" id="pagination">
+      <div class="pagination-info">
+        <span id="paginationInfo">加载中...</span>
+      </div>
+      <div class="pagination-controls" id="paginationControls">
+        <!-- Dynamically rendered -->
+      </div>
+    </div>
+  </div>
+</main>
+
+<!-- ===== CREATE/EDIT MODAL ===== -->
+<div class="modal-overlay" id="formModalOverlay">
+  <div class="modal" id="formModal">
+    <div class="modal-header">
+      <h2 id="formModalTitle">新建样地</h2>
+      <button class="modal-close" onclick="closeFormModal()">&times;</button>
+    </div>
+    <div class="modal-body">
+      <form id="plotForm" onsubmit="handleFormSubmit(event)" novalidate>
+        <input type="hidden" id="formPlotId" value="">
+        <div class="form-grid">
+          <div class="form-group">
+            <label for="formPlotCode">样地编号 *</label>
+            <input type="text" id="formPlotCode" required maxlength="50" placeholder="例如: PLOT-001" title="样地的唯一标识编码，例如 PLOT-001">
+            <span class="field-error">请输入样地编号</span>
+          </div>
+          <div class="form-group">
+            <label for="formRegionId">所属区域 *</label>
+            <select id="formRegionId" required title="选择样地所在的行政区">
+              <option value="">请选择区域</option>
+            </select>
+            <span class="field-error">请选择所属区域</span>
+          </div>
+          <div class="form-group">
+            <label for="formLatitude">纬度 (Latitude)</label>
+            <input type="number" id="formLatitude" step="any" placeholder="例如: 30.25" min="-90" max="90" title="样地的地理纬度坐标，范围 -90 到 90">
+          </div>
+          <div class="form-group">
+            <label for="formLongitude">经度 (Longitude)</label>
+            <input type="number" id="formLongitude" step="any" placeholder="例如: 120.12" min="-180" max="180" title="样地的地理经度坐标，范围 -180 到 180">
+          </div>
+          <div class="form-group">
+            <label for="formElevation">海拔 (m)</label>
+            <input type="number" id="formElevation" step="any" placeholder="例如: 350" min="0" title="样地的平均海拔高度，单位米">
+          </div>
+          <div class="form-group">
+            <label for="formArea">面积 (ha) *</label>
+            <input type="number" id="formArea" step="any" required placeholder="例如: 0.06" min="0.001" title="样地的面积，单位公顷（1公顷=10000平方米）">
+            <span class="field-error">请输入有效面积</span>
+          </div>
+          <div class="form-group">
+            <label for="formSurveyYear">调查年份 *</label>
+            <input type="number" id="formSurveyYear" required placeholder="例如: 2025" min="2000" max="2099" title="样地数据采集的年份，范围 2000-2099">
+            <span class="field-error">请输入有效年份</span>
+          </div>
+          <div class="form-group">
+            <label for="formPlotType">样地类型 *</label>
+            <select id="formPlotType" required title="样地的分类：固定样地、临时样地、对照样地等">
+              <option value="">请选择类型</option>
+              <option value="固定样地">固定样地</option>
+              <option value="临时样地">临时样地</option>
+              <option value="对照样地">对照样地</option>
+              <option value="示范样地">示范样地</option>
+              <option value="其他">其他</option>
+            </select>
+            <span class="field-error">请选择样地类型</span>
+          </div>
+          <div class="form-group full">
+            <label for="formDescription">描述</label>
+            <textarea id="formDescription" placeholder="样地描述信息（可选）" maxlength="500" title="样地的补充说明信息（可选）"></textarea>
+          </div>
+        </div>
+      </form>
+    </div>
+    <div class="modal-footer">
+      <button type="button" class="btn btn-outline" onclick="closeFormModal()">取消</button>
+      <button type="button" class="btn btn-primary" id="formSubmitBtn" onclick="handleFormSubmit()">保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== DETAIL MODAL ===== -->
+<div class="modal-overlay" id="detailModalOverlay">
+  <div class="modal wide" id="detailModal">
+    <div class="modal-header">
+      <h2 id="detailModalTitle">样地详情</h2>
+      <button class="modal-close" onclick="closeDetailModal()">&times;</button>
+    </div>
+    <div class="modal-body" id="detailModalBody">
+      <div style="text-align:center;padding:32px;"><div class="spinner"></div></div>
+    </div>
+    <div class="modal-footer">
+      <button type="button" class="btn btn-outline" onclick="closeDetailModal()">关闭</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== DELETE CONFIRM MODAL ===== -->
+<div class="modal-overlay" id="deleteModalOverlay">
+  <div class="modal" style="width:440px">
+    <div class="modal-header">
+      <h2>确认删除</h2>
+      <button class="modal-close" onclick="closeDeleteModal()">&times;</button>
+    </div>
+    <div class="modal-body">
+      <p style="font-size:14px;color:var(--color-text-secondary);">
+        确定要删除样地 <strong id="deletePlotCode" style="color:var(--color-danger);"></strong> 吗？
+      </p>
+      <p style="font-size:13px;color:var(--color-text-muted);margin-top:8px;">
+        此操作将同时删除该样地下所有树木和蓄积量数据，且不可恢复。
+      </p>
+    </div>
+    <div class="modal-footer">
+      <button type="button" class="btn btn-outline" onclick="closeDeleteModal()">取消</button>
+      <button type="button" class="btn btn-danger-outline" id="deleteConfirmBtn" style="background:var(--color-danger);color:#fff;border-color:var(--color-danger);" onclick="confirmDelete()">确认删除</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== TREE EDIT MODAL ===== -->
+<div class="modal-overlay" id="treeEditModalOverlay">
+  <div class="modal">
+    <div class="modal-header">
+      <h2 id="treeEditModalTitle">编辑树木</h2>
+      <button class="modal-close" onclick="closeTreeEditModal()">&times;</button>
+    </div>
+    <div class="modal-body">
+      <form id="treeEditForm" onsubmit="treeEditFormSubmit(event)" novalidate>
+        <input type="hidden" id="treeEditId" value="">
+        <input type="hidden" id="treeEditPlotId" value="">
+        <div class="form-grid">
+          <div class="form-group">
+            <label for="treeEditSpecies">树种 *</label>
+            <input type="text" id="treeEditSpecies" required placeholder="例如: 马尾松、杉木、毛竹…">
+          </div>
+          <div class="form-group">
+            <label for="treeEditNumber">编号</label>
+            <input type="text" id="treeEditNumber" maxlength="50">
+          </div>
+          <div class="form-group">
+            <label for="treeEditDbh">胸径 (cm) *</label>
+            <input type="number" id="treeEditDbh" step="0.1" required placeholder="例如: 15.2" min="0">
+          </div>
+          <div class="form-group">
+            <label for="treeEditHeight">树高 (m) *</label>
+            <input type="number" id="treeEditHeight" step="0.1" required placeholder="例如: 12.5" min="0">
+          </div>
+          <div class="form-group">
+            <label for="treeEditAge">树龄 (年)</label>
+            <input type="number" id="treeEditAge" placeholder="例如: 30" min="0">
+          </div>
+          <div class="form-group">
+            <label for="treeEditHealth">健康状况</label>
+            <input type="text" id="treeEditHealth" maxlength="50" placeholder="例如: 良好">
+          </div>
+          <div class="form-group">
+            <label for="treeEditVolume">实测蓄积量 (m³)</label>
+            <input type="number" id="treeEditVolume" step="0.0001" placeholder="例如: 0.1301" min="0">
+          </div>
+          <div class="form-group">
+            <label for="treeEditMeasureDate">测量日期</label>
+            <input type="date" id="treeEditMeasureDate">
+          </div>
+        </div>
+      </form>
+    </div>
+    <div class="modal-footer">
+      <button type="button" class="btn btn-outline" onclick="closeTreeEditModal()">取消</button>
+      <button type="button" class="btn btn-primary" id="treeEditSubmitBtn" onclick="treeEditFormSubmit()">保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== BATCH PLOT IMPORT MODAL ===== -->
+<div class="modal-overlay" id="batchPlotModalOverlay">
+  <div class="modal">
+    <div class="modal-header">
+      <h2>批量导入样地</h2>
+      <button class="modal-close" onclick="closeBatchPlotModal()">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label>粘贴数据（每行一样地，逗号分隔）</label>
+        <div class="help-text" style="margin-bottom:6px;">每行一条记录，按格式填写样地信息。区域名称必须与系统中已有的区域名称完全一致。</div>
+        <textarea id="batchPlotInput" style="width:100%;min-height:200px;padding:10px;font-family:var(--font-mono);font-size:13px;border:1px solid var(--color-border);border-radius:var(--radius-sm);resize:vertical;" spellcheck="false"></textarea>
+      </div>
+      <div class="form-group" style="margin-top:4px;">
+        <span style="font-size:12px;color:var(--color-text-muted);">
+          格式：<strong>样地编号, 区域名称, 面积(ha), 调查年份, 样地类型, 纬度, 经度, 海拔(m), 描述</strong>
+          <br>纬度/经度/海拔/描述可选，示例：<br>
+          <code>PLOT-01, 西湖区, 0.06, 2025, 固定样地, 30.25, 120.12, 350</code><br>
+          <code>PLOT-02, 余杭区, 0.08, 2025, 临时样地, 30.35, 120.08</code>
+        </span>
+      </div>
+      <div id="batchPlotError" style="display:none;margin-top:8px;padding:8px 12px;background:#fef2f2;color:#991b1b;border-radius:var(--radius-sm);font-size:13px;white-space:pre-wrap;"></div>
+    </div>
+    <div class="modal-footer">
+      <button type="button" class="btn btn-outline" onclick="closeBatchPlotModal()">取消</button>
+      <button type="button" class="btn btn-primary" id="batchPlotSubmitBtn" onclick="batchPlotSubmit()">确认导入</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== BATCH TREE IMPORT MODAL ===== -->
+<div class="modal-overlay" id="batchTreeModalOverlay">
+  <div class="modal">
+    <div class="modal-header">
+      <h2>批量导入树木</h2>
+      <button class="modal-close" onclick="closeBatchTreeModal()">&times;</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="batchTreePlotId" value="">
+      <div class="form-group">
+        <label>粘贴数据（每行一棵树，用逗号分隔）</label>
+        <div class="help-text" style="margin-bottom:6px;">每行一棵树，按格式填写。树种名称必须与系统中已有的树种名称完全一致。</div>
+        <textarea id="batchTreeInput" style="width:100%;min-height:200px;padding:10px;font-family:var(--font-mono);font-size:13px;border:1px solid var(--color-border);border-radius:var(--radius-sm);resize:vertical;" spellcheck="false"></textarea>
+      </div>
+      <div class="form-group" style="margin-top:4px;">
+        <span style="font-size:12px;color:var(--color-text-muted);">
+          格式：<strong>树种, 胸径, 树高, 树龄, 编号, 健康状况</strong>
+          <br>树龄/编号/健康状况可选，示例：<code>马尾松, 15.2, 12.5, 30, T001, 良好</code>
+        </span>
+      </div>
+      <div id="batchTreeError" style="display:none;margin-top:8px;padding:8px 12px;background:#fef2f2;color:#991b1b;border-radius:var(--radius-sm);font-size:13px;white-space:pre-wrap;"></div>
+    </div>
+    <div class="modal-footer">
+      <button type="button" class="btn btn-outline" onclick="closeBatchTreeModal()">取消</button>
+      <button type="button" class="btn btn-primary" id="batchTreeSubmitBtn" onclick="batchTreeSubmit()">确认导入</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== TOAST ===== -->
+<div class="toast-container" id="toastContainer"></div>
+
+<script src="js/plots.js"></script>
+</body>
+</html>

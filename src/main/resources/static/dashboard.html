@@ -1,0 +1,726 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>仪表盘 - 森林资源调查系统</title>
+  <link rel="stylesheet" href="css/style.css">
+  <!-- ECharts CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/echarts@5/dist/echarts.min.js"></script>
+  <style>
+    /* ===== Dashboard Page-Specific Styles ===== */
+
+    .dashboard-page {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      background:
+        radial-gradient(ellipse at 15% 40%, rgba(44, 110, 73, 0.04) 0%, transparent 50%),
+        radial-gradient(ellipse at 85% 80%, rgba(76, 149, 108, 0.04) 0%, transparent 50%),
+        linear-gradient(180deg, #f8faf7 0%, #f0f4f0 100%);
+    }
+
+    /* Navbar — identical to login but always uses the dark style */
+    .dashboard-page .navbar {
+      background: var(--color-primary-dark);
+      box-shadow: var(--shadow-md);
+    }
+
+    /* Main content */
+    .dashboard-main {
+      flex: 1;
+      padding: var(--space-8) var(--space-6);
+      max-width: 1280px;
+      width: 100%;
+      margin: 0 auto;
+    }
+
+    /* Page header with fade-in */
+    .dashboard-header {
+      margin-bottom: var(--space-8);
+      animation: dashHeaderIn 0.5s ease-out both;
+    }
+
+    @keyframes dashHeaderIn {
+      from { opacity: 0; transform: translateY(-12px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .dashboard-header h1 {
+      font-size: 1.75rem;
+      font-weight: 700;
+      color: var(--color-primary-dark);
+      margin-bottom: var(--space-1);
+    }
+
+    .dashboard-header .header-subtitle {
+      font-size: 0.9rem;
+      color: var(--color-text-secondary);
+    }
+
+    /* ===== Loading Overlay ===== */
+    .loading-overlay {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      gap: var(--space-4);
+      padding: var(--space-16) 0;
+      animation: loadFadeIn 0.3s ease;
+    }
+
+    @keyframes loadFadeIn {
+      from { opacity: 0; }
+      to   { opacity: 1; }
+    }
+
+    .loading-overlay .spinner-lg {
+      width: 44px;
+      height: 44px;
+      border: 4px solid var(--color-border);
+      border-top-color: var(--color-primary);
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+    }
+
+    .loading-overlay .loading-text {
+      font-size: 0.95rem;
+      color: var(--color-text-secondary);
+      letter-spacing: 0.3px;
+    }
+
+    /* ===== Stats Cards Row ===== */
+    .stats-row {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: var(--space-5);
+      margin-bottom: var(--space-8);
+    }
+
+    .stat-card {
+      background: var(--color-surface);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-sm);
+      border: 1px solid var(--color-border-light);
+      padding: var(--space-6);
+      display: flex;
+      align-items: flex-start;
+      gap: var(--space-4);
+      transition: all var(--transition-normal);
+      animation: cardStaggerIn 0.5s ease-out both;
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* Decorative top-accent bar */
+    .stat-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+    }
+
+    .stat-card:nth-child(1)::before { background: var(--color-primary); }
+    .stat-card:nth-child(2)::before { background: var(--color-info); }
+    .stat-card:nth-child(3)::before { background: var(--color-success); }
+    .stat-card:nth-child(4)::before { background: var(--color-warning); }
+
+    .stat-card:hover {
+      box-shadow: var(--shadow-lg);
+      transform: translateY(-2px);
+    }
+
+    @keyframes cardStaggerIn {
+      from { opacity: 0; transform: translateY(16px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Stagger delay per card */
+    .stat-card:nth-child(1) { animation-delay: 0.10s; }
+    .stat-card:nth-child(2) { animation-delay: 0.18s; }
+    .stat-card:nth-child(3) { animation-delay: 0.26s; }
+    .stat-card:nth-child(4) { animation-delay: 0.34s; }
+
+    .stat-icon {
+      width: 46px;
+      height: 46px;
+      border-radius: var(--radius-md);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.35rem;
+      flex-shrink: 0;
+    }
+
+    .stat-card:nth-child(1) .stat-icon {
+      background: rgba(44, 110, 73, 0.10);
+      color: var(--color-primary);
+    }
+
+    .stat-card:nth-child(2) .stat-icon {
+      background: rgba(52, 152, 219, 0.10);
+      color: var(--color-info);
+    }
+
+    .stat-card:nth-child(3) .stat-icon {
+      background: rgba(39, 174, 96, 0.10);
+      color: var(--color-success);
+    }
+
+    .stat-card:nth-child(4) .stat-icon {
+      background: rgba(243, 156, 18, 0.10);
+      color: var(--color-warning);
+    }
+
+    .stat-body {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .stat-label {
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      color: var(--color-text-muted);
+      margin-bottom: var(--space-1);
+      font-weight: 500;
+    }
+
+    .stat-value {
+      font-size: 1.75rem;
+      font-weight: 700;
+      color: var(--color-text);
+      font-family: var(--font-mono);
+      line-height: 1.2;
+    }
+
+    .stat-value--loading {
+      color: var(--color-text-muted);
+      font-size: 1.4rem;
+    }
+
+    /* ===== Charts Row ===== */
+    .charts-row {
+      display: grid;
+      grid-template-columns: 1.3fr 1fr;
+      gap: var(--space-5);
+      margin-bottom: var(--space-8);
+    }
+
+    .chart-card {
+      background: var(--color-surface);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-md);
+      border: 1px solid var(--color-border-light);
+      overflow: hidden;
+      animation: chartFadeIn 0.6s ease-out 0.4s both;
+    }
+
+    @keyframes chartFadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .chart-card .card-header {
+      font-weight: 600;
+      font-size: 1rem;
+      color: var(--color-primary-dark);
+    }
+
+    .chart-card .card-header .chart-badge {
+      font-size: 0.75rem;
+      font-weight: 500;
+      color: var(--color-text-muted);
+      background: var(--color-bg);
+      padding: var(--space-1) var(--space-3);
+      border-radius: 20px;
+    }
+
+    /* ===== Chart Toggle Groups ===== */
+    .chart-toggle-group {
+      display: flex;
+      gap: 3px;
+      background: var(--color-bg-secondary, #f0f2f0);
+      border-radius: 6px;
+      padding: 3px;
+    }
+    .chart-toggle {
+      border: none;
+      background: transparent;
+      padding: 4px 10px;
+      border-radius: 4px;
+      font-size: 12px;
+      color: var(--color-text-muted, #636e72);
+      cursor: pointer;
+      transition: all 0.2s;
+      white-space: nowrap;
+    }
+    .chart-toggle:hover {
+      color: var(--color-primary, #2c6e49);
+    }
+    .chart-toggle.active {
+      background: #fff;
+      color: var(--color-primary, #2c6e49);
+      font-weight: 500;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+
+    .chart-container {
+      width: 100%;
+      height: 380px;
+    }
+
+    /* ===== Error Banner ===== */
+    .dashboard-error {
+      text-align: center;
+      padding: var(--space-10) var(--space-6);
+    }
+
+    .dashboard-error .error-icon {
+      font-size: 3rem;
+      margin-bottom: var(--space-4);
+      opacity: 0.6;
+    }
+
+    .dashboard-error .error-msg {
+      color: var(--color-error);
+      font-size: 1rem;
+      margin-bottom: var(--space-5);
+    }
+
+    .dashboard-error .error-detail {
+      font-size: 0.85rem;
+      color: var(--color-text-muted);
+      margin-bottom: var(--space-5);
+    }
+
+    /* ===== Skeleton / placeholder ===== */
+    .skeleton-block {
+      background: linear-gradient(90deg, var(--color-border-light) 25%, var(--color-bg) 50%, var(--color-border-light) 75%);
+      background-size: 200% 100%;
+      animation: shimmer 1.4s ease infinite;
+      border-radius: var(--radius-md);
+    }
+
+    @keyframes shimmer {
+      0%   { background-position: 200% 0; }
+      100% { background-position: -200% 0; }
+    }
+
+    /* ===== Responsive ===== */
+    @media (max-width: 1024px) {
+      .stats-row {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .charts-row {
+        grid-template-columns: 1fr;
+      }
+
+      .chart-container {
+        height: 320px;
+      }
+    }
+
+    @media (max-width: 640px) {
+      .dashboard-main {
+        padding: var(--space-4) var(--space-3);
+      }
+
+      .stats-row {
+        grid-template-columns: repeat(2, 1fr);
+        gap: var(--space-3);
+      }
+
+      .stat-card {
+        padding: var(--space-4);
+      }
+
+      .stat-value {
+        font-size: 1.35rem;
+      }
+
+      .chart-container {
+        height: 280px;
+      }
+    }
+
+    /* ===== Profile Modal ===== */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.45);
+      z-index: 999;
+      justify-content: center;
+      align-items: center;
+      animation: modalFadeIn 0.2s ease;
+    }
+    .modal-overlay.active {
+      display: flex;
+    }
+    @keyframes modalFadeIn {
+      from { opacity: 0; }
+      to   { opacity: 1; }
+    }
+    @keyframes modalSlideIn {
+      from { opacity: 0; transform: translateY(-24px) scale(0.96); }
+      to   { opacity: 1; transform: translateY(0) scale(1); }
+    }
+    .modal-box {
+      background: var(--color-surface);
+      border-radius: var(--radius-lg);
+      box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+      width: 90%;
+      max-width: 460px;
+      max-height: 90vh;
+      overflow-y: auto;
+      animation: modalSlideIn 0.25s ease-out;
+    }
+    .modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: var(--space-5) var(--space-6);
+      border-bottom: 1px solid var(--color-border-light);
+    }
+    .modal-header h2 {
+      font-size: 1.15rem;
+      font-weight: 600;
+      color: var(--color-primary-dark);
+      margin: 0;
+    }
+    .modal-close {
+      background: none;
+      border: none;
+      font-size: 1.4rem;
+      color: var(--color-text-muted);
+      cursor: pointer;
+      padding: var(--space-1);
+      line-height: 1;
+      border-radius: var(--radius-md);
+      transition: all 0.15s;
+    }
+    .modal-close:hover {
+      background: var(--color-bg);
+      color: var(--color-text);
+    }
+    .modal-body {
+      padding: var(--space-6);
+    }
+    .modal-section {
+      margin-bottom: var(--space-6);
+    }
+    .modal-section:last-child {
+      margin-bottom: 0;
+    }
+    .modal-section-title {
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: var(--color-primary);
+      margin-bottom: var(--space-4);
+      padding-bottom: var(--space-2);
+      border-bottom: 1px solid var(--color-border-light);
+    }
+    .modal-form-group {
+      margin-bottom: var(--space-4);
+    }
+    .modal-form-group label {
+      display: block;
+      font-size: 0.82rem;
+      font-weight: 500;
+      color: var(--color-text-secondary);
+      margin-bottom: var(--space-1);
+    }
+    .modal-form-group input {
+      width: 100%;
+      padding: 8px 12px;
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-md);
+      font-size: 0.9rem;
+      color: var(--color-text);
+      background: var(--color-surface);
+      transition: border-color 0.2s;
+      box-sizing: border-box;
+    }
+    .modal-form-group input:focus {
+      outline: none;
+      border-color: var(--color-primary);
+      box-shadow: 0 0 0 3px rgba(44,110,73,0.1);
+    }
+    .modal-form-group input:disabled {
+      background: var(--color-bg);
+      color: var(--color-text-muted);
+    }
+    .modal-msg {
+      font-size: 0.82rem;
+      padding: var(--space-2) var(--space-3);
+      border-radius: var(--radius-md);
+      margin-bottom: var(--space-3);
+      display: none;
+    }
+    .modal-msg.success {
+      display: block;
+      background: #e8f5e9;
+      color: var(--color-success);
+      border: 1px solid #c8e6c9;
+    }
+    .modal-msg.error {
+      display: block;
+      background: #fbe9e7;
+      color: var(--color-error);
+      border: 1px solid #ffccbc;
+    }
+    .modal-btn-row {
+      display: flex;
+      gap: var(--space-3);
+      margin-top: var(--space-3);
+    }
+    .modal-btn-row .btn {
+      flex: 1;
+    }
+    .btn-profile {
+      background: var(--color-primary);
+      color: #fff;
+      border: none;
+      padding: 9px 16px;
+      border-radius: var(--radius-md);
+      font-size: 0.88rem;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .btn-profile:hover {
+      background: var(--color-primary-dark);
+    }
+    .btn-profile:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+    .btn-profile.loading {
+      position: relative;
+      color: transparent;
+    }
+    .btn-profile.loading::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 16px;
+      height: 16px;
+      margin: -8px 0 0 -8px;
+      border: 2px solid rgba(255,255,255,0.3);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin 0.6s linear infinite;
+    }
+    /* Navbar user trigger */
+    .navbar-user-trigger {
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: var(--space-1) var(--space-2);
+      border-radius: var(--radius-md);
+      transition: background 0.15s;
+    }
+    .navbar-user-trigger:hover {
+      background: rgba(255,255,255,0.1);
+    }
+    .navbar-user-trigger .user-icon {
+      font-size: 0.9rem;
+    }
+
+    @media (max-width: 480px) {
+      .stats-row {
+        grid-template-columns: 1fr 1fr;
+        gap: var(--space-2);
+      }
+
+      .navbar-nav a {
+        font-size: 0.8rem;
+        padding: var(--space-1) var(--space-2);
+      }
+    }
+  </style>
+</head>
+<body class="dashboard-page">
+
+  <!-- ===== Top Navigation Bar ===== -->
+  <nav class="navbar">
+    <a href="dashboard.html" class="navbar-brand">
+      <span class="logo-icon">&#9730;</span>
+      <span>AI森林资源调查系统</span>
+    </a>
+    <div class="navbar-nav">
+      <a href="dashboard.html" class="active">仪表盘</a>
+      <a href="plots.html">样地管理</a>
+      <a href="statistics.html">分区统计</a>
+    </div>
+    <div class="navbar-user">
+      <span class="navbar-user-trigger" id="profileTrigger" title="点击编辑个人信息">
+        <span class="user-icon">&#128100;</span>
+        <span id="navbarUsername">用户</span>
+      </span>
+      <button class="btn-logout" id="btnLogout" title="退出登录">退出</button>
+    </div>
+  </nav>
+
+  <!-- ===== Main Content ===== -->
+  <main class="dashboard-main">
+
+    <!-- Page Header -->
+    <div class="dashboard-header">
+      <h1>仪表盘</h1>
+      <p class="header-subtitle">森林资源调查数据总览 · 区域对比与物种分布</p>
+    </div>
+
+    <!-- Loading State -->
+    <div class="loading-overlay" id="loadingOverlay">
+      <div class="spinner-lg"></div>
+      <p class="loading-text">正在加载仪表盘数据...</p>
+    </div>
+
+    <!-- Error State -->
+    <div class="dashboard-error hidden" id="errorSection">
+      <div class="error-icon">&#9888;</div>
+      <p class="error-msg" id="errorMsg">数据加载失败</p>
+      <p class="error-detail" id="errorDetail"></p>
+      <button class="btn btn-primary" id="btnRetry">重新加载</button>
+    </div>
+
+    <!-- Dashboard Content (hidden until data loads) -->
+    <div id="dashboardContent" class="hidden">
+
+      <!-- ===== Stats Cards Row ===== -->
+      <div class="stats-row" id="statsRow">
+        <div class="stat-card" title="系统中所有调查样地的总数量">
+          <div class="stat-icon">&#128207;</div>
+          <div class="stat-body">
+            <div class="stat-label">样地总数</div>
+            <div class="stat-value" id="statTotalPlots">—</div>
+          </div>
+        </div>
+        <div class="stat-card" title="所有样地中调查树木的总数量">
+          <div class="stat-icon">&#127795;</div>
+          <div class="stat-body">
+            <div class="stat-label">树木总数</div>
+            <div class="stat-value" id="statTotalTrees">—</div>
+          </div>
+        </div>
+        <div class="stat-card" title="所有样地树木实测蓄积量的总和，单位立方米">
+          <div class="stat-icon">&#128230;</div>
+          <div class="stat-body">
+            <div class="stat-label">总蓄积量 (m³)</div>
+            <div class="stat-value" id="statTotalVolume">—</div>
+          </div>
+        </div>
+        <div class="stat-card" title="系统中已录入的行政区/区域总数">
+          <div class="stat-icon">&#127758;</div>
+          <div class="stat-body">
+            <div class="stat-label">行政区数量</div>
+            <div class="stat-value" id="statRegionCount">—</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== Charts Row ===== -->
+      <div class="charts-row">
+        <!-- Bar Chart: Regional Volume Comparison -->
+        <div class="chart-card">
+          <div class="card-header">
+            <span>区域蓄积量对比</span>
+            <div class="chart-toggle-group" id="barChartToggle">
+              <button class="chart-toggle active" data-mode="volume" title="显示各区域的实测蓄积量与预测蓄积量对比">蓄积量</button>
+              <button class="chart-toggle" data-mode="plots" title="显示各区域拥有的样地数量">样地数</button>
+              <button class="chart-toggle" data-mode="trees" title="显示各区域拥有的树木总数量">树木数</button>
+            </div>
+          <div class="help-text">切换柱状图显示维度：蓄积量对比、样地数量或树木数量</div>
+          </div>
+          <div class="card-body" style="padding: var(--space-3) var(--space-2);">
+            <div class="chart-container" id="barChart"></div>
+          </div>
+        </div>
+
+        <!-- Pie Chart: Species Distribution -->
+        <div class="chart-card">
+          <div class="card-header">
+            <span>树种分布统计</span>
+            <div class="chart-toggle-group" id="pieChartToggle">
+              <button class="chart-toggle active" data-mode="count" title="按各树种的株数占比显示分布">按株数</button>
+              <button class="chart-toggle" data-mode="volume" title="按各树种的蓄积量占比显示分布">按蓄积量</button>
+            </div>
+          <div class="help-text">切换饼图统计方式：按树木株数或按蓄积量</div>
+          </div>
+          <div class="card-body" style="padding: var(--space-3) var(--space-2);">
+            <div class="chart-container" id="pieChart"></div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /#dashboardContent -->
+
+  </main>
+
+  <!-- ===== Profile Modal ===== -->
+  <div class="modal-overlay" id="profileModal">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h2>个人信息</h2>
+        <button class="modal-close" id="modalCloseBtn" title="关闭">&times;</button>
+      </div>
+      <div class="modal-body">
+        <!-- Profile Section -->
+        <div class="modal-section">
+          <div class="modal-section-title">基本信息</div>
+          <div id="profileMsg" class="modal-msg"></div>
+          <div class="modal-form-group">
+            <label>用户名</label>
+            <input type="text" id="modalUsername" disabled>
+          </div>
+          <div class="modal-form-group">
+            <label>真实姓名</label>
+            <input type="text" id="modalRealName" placeholder="请输入真实姓名" maxlength="50">
+          </div>
+          <div class="modal-form-group">
+            <label>手机号</label>
+            <input type="text" id="modalPhone" placeholder="请输入手机号" maxlength="20">
+          </div>
+          <div class="modal-btn-row">
+            <button class="btn-profile" id="btnSaveProfile">保存修改</button>
+          </div>
+        </div>
+
+        <!-- Divider -->
+        <hr style="border: none; border-top: 1px solid var(--color-border-light); margin: var(--space-5) 0;">
+
+        <!-- Password Section -->
+        <div class="modal-section">
+          <div class="modal-section-title">修改密码</div>
+          <div id="passwordMsg" class="modal-msg"></div>
+          <div class="modal-form-group">
+            <label>原密码</label>
+            <input type="password" id="modalOldPwd" placeholder="请输入原密码">
+          </div>
+          <div class="modal-form-group">
+            <label>新密码</label>
+            <input type="password" id="modalNewPwd" placeholder="请输入新密码" minlength="6">
+          </div>
+          <div class="modal-form-group">
+            <label>确认新密码</label>
+            <input type="password" id="modalConfirmPwd" placeholder="请再次输入新密码">
+          </div>
+          <div class="modal-btn-row">
+            <button class="btn-profile" id="btnChangePwd">修改密码</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== Dashboard JavaScript ===== -->
+  <script src="js/dashboard.js"></script>
+
+</body>
+</html>

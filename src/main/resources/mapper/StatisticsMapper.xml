@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="edu.hznu.forest.mapper.StatisticsMapper">
+
+    <select id="selectRegionStatsView" resultType="edu.hznu.forest.dto.RegionStatsDTO">
+        SELECT region_id AS regionId, region_name AS regionName,
+               plot_count AS plotCount, tree_count AS treeCount,
+               total_measured_volume AS totalMeasuredVolume,
+               total_predicted_volume AS totalPredictedVolume,
+               avg_error AS avgError
+        FROM v_region_stats
+    </select>
+
+    <select id="selectPlotSummaryView" resultType="edu.hznu.forest.dto.PlotSummaryDTO">
+        SELECT plot_id AS plotId, plot_code AS plotCode, region_name AS regionName,
+               tree_count AS treeCount, total_volume AS totalVolume,
+               ai_predicted_volume AS aiPredictedVolume
+        FROM v_plot_summary
+    </select>
+
+    <select id="callAllRegionsSummary" resultType="edu.hznu.forest.dto.RegionStatsDTO">
+        { CALL sp_all_regions_summary() }
+    </select>
+
+    <select id="callRegionVolumeSummary" resultType="edu.hznu.forest.dto.RegionStatsDTO">
+        { CALL sp_region_volume_summary(#{rid}) }
+    </select>
+
+    <select id="selectSpeciesDistribution" resultType="java.util.LinkedHashMap">
+        SELECT s.common_name AS `name`, COUNT(t.tree_id) AS `value`
+        FROM species s
+        LEFT JOIN tree t ON s.species_id = t.species_id
+        GROUP BY s.species_id, s.common_name
+        ORDER BY s.common_name
+    </select>
+
+    <select id="selectSpeciesVolumeDistribution" resultType="java.util.LinkedHashMap">
+        SELECT s.common_name AS `name`, COALESCE(SUM(v.measured_volume), 0) AS `value`
+        FROM species s
+        LEFT JOIN tree t ON s.species_id = t.species_id
+        LEFT JOIN volume v ON t.tree_id = v.tree_id
+        GROUP BY s.species_id, s.common_name
+        ORDER BY s.common_name
+    </select>
+
+</mapper>

@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="edu.hznu.forest.mapper.VolumeMapper">
+
+    <resultMap id="volumeResultMap" type="edu.hznu.forest.entity.Volume">
+        <id property="volId" column="vol_id"/>
+        <result property="treeId" column="tree_id"/>
+        <result property="measuredVolume" column="measured_volume"/>
+        <result property="measureDate" column="measure_date"/>
+    </resultMap>
+
+    <select id="findById" resultMap="volumeResultMap">
+        SELECT * FROM volume WHERE vol_id = #{id}
+    </select>
+
+    <select id="findByTreeId" resultMap="volumeResultMap">
+        SELECT * FROM volume WHERE tree_id = #{treeId}
+    </select>
+
+    <select id="findByPlotId" resultMap="volumeResultMap">
+        SELECT v.*
+        FROM volume v
+        JOIN tree t ON v.tree_id = t.tree_id
+        WHERE t.plot_id = #{plotId}
+    </select>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="volId">
+        INSERT INTO volume (tree_id, measured_volume, measure_date)
+        VALUES (#{treeId}, #{measuredVolume}, #{measureDate})
+    </insert>
+
+    <update id="update">
+        UPDATE volume
+        SET tree_id = #{treeId},
+            measured_volume = #{measuredVolume},
+            measure_date = #{measureDate}
+        WHERE vol_id = #{volId}
+    </update>
+
+    <delete id="delete">
+        DELETE FROM volume WHERE vol_id = #{id}
+    </delete>
+
+    <select id="sumVolumeByRegion" resultType="java.math.BigDecimal">
+        SELECT COALESCE(SUM(v.measured_volume), 0)
+        FROM volume v
+        JOIN tree t ON v.tree_id = t.tree_id
+        JOIN plot p ON t.plot_id = p.plot_id
+        WHERE p.region_id = #{regionId}
+    </select>
+
+</mapper>
