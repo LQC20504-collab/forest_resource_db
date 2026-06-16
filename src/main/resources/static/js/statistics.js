@@ -579,7 +579,9 @@
 
   /* ========== Bootstrap ========== */
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initStatistics);
+    document.addEventListener('DOMContentLoaded', function() {
+      initStatistics();
+    });
   } else {
     initStatistics();
   }

@@ -24,6 +24,43 @@
         SELECT * FROM plot WHERE plot_code = #{plotCode}
     </select>
 
+    <select id="exportData" resultType="java.util.LinkedHashMap">
+        SELECT
+            p.plot_code AS plotCode,
+            r.name AS regionName,
+            p.latitude,
+            p.longitude,
+            p.elevation,
+            p.area,
+            p.survey_year AS surveyYear,
+            p.plot_type AS plotType,
+            p.description,
+            t.tree_number AS treeNumber,
+            s.common_name AS speciesName,
+            t.dbh,
+            t.height,
+            t.age,
+            t.health_status AS healthStatus,
+            v.measured_volume AS measuredVolume
+        FROM plot p
+        LEFT JOIN region r ON p.region_id = r.region_id
+        LEFT JOIN tree t ON p.plot_id = t.plot_id
+        LEFT JOIN species s ON t.species_id = s.species_id
+        LEFT JOIN volume v ON t.tree_id = v.tree_id
+        <where>
+            <if test="regionId != null">
+                p.region_id = #{regionId}
+            </if>
+            <if test="minLat != null and maxLat != null">
+                AND p.latitude BETWEEN #{minLat} AND #{maxLat}
+            </if>
+            <if test="minLng != null and maxLng != null">
+                AND p.longitude BETWEEN #{minLng} AND #{maxLng}
+            </if>
+        </where>
+        ORDER BY p.plot_code, t.tree_number
+    </select>
+
     <insert id="insert" parameterType="Plot" useGeneratedKeys="true" keyProperty="plotId">
         INSERT INTO plot(plot_code, region_id, latitude, longitude, elevation, area, survey_year, plot_type, description)
         VALUES(#{plotCode}, #{regionId}, #{latitude}, #{longitude}, #{elevation}, #{area}, #{surveyYear}, #{plotType}, #{description})

@@ -424,9 +424,21 @@
 
   function onRegionFilterChange() {
     var $filter = document.getElementById('regionFilter');
-    currentRegionFilter = $filter ? $filter.value : '';
-    currentPage = 1;
-    fetchPlots(1);
+    var val = $filter ? $filter.value : '';
+
+    /* Route to the active tab's handler */
+    var listPanel = document.getElementById('tabPanelList');
+    if (listPanel && listPanel.classList.contains('active')) {
+      currentRegionFilter = val;
+      currentPage = 1;
+      fetchPlots(1);
+    } else {
+      summaryRegionFilter = val;
+      summaryCurrentPage = 1;
+      if (summaryTabLoaded) {
+        renderSummaryPage(1);
+      }
+    }
   }
 
   /* ==================================================================
@@ -963,16 +975,70 @@
       $usernameDisplay.textContent = username;
     }
 
-    /* 3. Fetch regions, then fetch plots */
+    /* 3. Init tabs */
+    initPlotTabs();
+
+    /* 4. Wire up CSV file inputs */
+    setupCsvFileInputs();
+
+    /* 5. Fetch regions, then fetch plots */
     fetchRegions()
       .then(function () {
         return fetchPlots(1);
+      })
+      .then(function () {
+        /* 6. Check URL parameter for direct navigation to detail */
+        var params = new URLSearchParams(window.location.search);
+        var plotIdParam = params.get('plotId');
+        if (plotIdParam) {
+          var id = parseInt(plotIdParam, 10);
+          if (!isNaN(id)) {
+            openDetailModal(id);
+          }
+        }
       })
       .catch(function (err) {
         if (err.message !== 'UNAUTHORIZED') {
           console.error('initPlots error:', err);
         }
       });
+  }
+
+  /* ==================================================================
+   *  CSV File Import helpers
+   * ================================================================== */
+
+  function setupCsvFileInputs() {
+    /* Plot CSV */
+    var $plotCsv = document.getElementById('batchPlotCsvFile');
+    if ($plotCsv) {
+      $plotCsv.addEventListener('change', function(e) {
+        readCsvIntoTextarea(e, 'batchPlotInput');
+      });
+    }
+    /* Tree CSV */
+    var $treeCsv = document.getElementById('batchTreeCsvFile');
+    if ($treeCsv) {
+      $treeCsv.addEventListener('change', function(e) {
+        readCsvIntoTextarea(e, 'batchTreeInput');
+      });
+    }
+  }
+
+  function readCsvIntoTextarea(event, textareaId) {
+    var file = event.target.files && event.target.files[0];
+    if (!file) return;
+
+    var reader = new FileReader();
+    reader.onload = function(e) {
+      var text = e.target.result;
+      var $ta = document.getElementById(textareaId);
+      if ($ta) { $ta.value = text; }
+    };
+    reader.readAsText(file, 'UTF-8');
+
+    /* Reset input so re-selecting the same file triggers change */
+    event.target.value = '';
   }
 
   /* ==================================================================
@@ -1171,8 +1237,8 @@
   function openBatchPlotModal() {
     document.getElementById('batchPlotInput').value =
       '样地编号, 区域名称, 面积, 调查年份, 样地类型, 纬度, 经度, 海拔, 描述\n' +
-      'PLOT-A1, 西湖区, 0.06, 2025, 固定样地, 30.25, 120.12, 350\n' +
-      'PLOT-A2, 余杭区, 0.08, 2025, 临时样地, 30.35, 120.08';
+      'PLOT-A1, 杭州市, 0.06, 2025, 固定样地, 30.25, 120.12, 350\n' +
+      'PLOT-A2, 宁波市, 0.08, 2025, 临时样地, 30.35, 120.08';
     document.getElementById('batchPlotError').textContent = '';
     document.getElementById('batchPlotError').style.display = 'none';
     document.getElementById('batchPlotModalOverlay').classList.add('active');
@@ -1339,6 +1405,228 @@
     });
   }
 
+  /* ==================================================================
+   *  Plot Summary View (v_plot_summary) — client-side pagination
+   * ================================================================== */
+
+  var SUMMARY_PAGE_SIZE = 10;
+  var summaryAllData = [];
+  var summaryCurrentPage = 1;
+  var summaryTotalPages = 0;
+  var summaryTabLoaded = false;
+  var summaryRegionFilter = '';
+
+  function initPlotTabs() {
+    var tabBar = document.getElementById('plotTabBar');
+    if (!tabBar) return;
+
+    tabBar.addEventListener('click', function(e) {
+      var btn = e.target.closest('.tab-btn');
+      if (!btn) return;
+
+      var tabName = btn.getAttribute('data-ptab');
+      if (!tabName) return;
+
+      /* Update active button */
+      var allBtns = tabBar.querySelectorAll('.tab-btn');
+      allBtns.forEach(function(b) { b.classList.remove('active'); });
+      btn.classList.add('active');
+
+      /* Show target panel, hide others */
+      var panels = document.querySelectorAll('.tab-panel');
+      panels.forEach(function(p) { p.classList.remove('active'); });
+      var targetPanel = document.getElementById('tabPanel' + tabName.charAt(0).toUpperCase() + tabName.slice(1));
+      if (targetPanel) {
+        targetPanel.classList.add('active');
+      }
+
+      /* Show region filter only on summary tab, full action bar on list tab */
+      var actionBar = document.getElementById('plotActionBar');
+      if (actionBar) {
+        if (tabName === 'summary') {
+          actionBar.classList.add('action-bar--filter-only');
+          actionBar.classList.remove('hidden');
+        } else {
+          actionBar.classList.remove('action-bar--filter-only');
+          actionBar.classList.remove('hidden');
+        }
+      }
+
+      /* Load summary data on first visit */
+      if (tabName === 'summary' && !summaryTabLoaded) {
+        summaryTabLoaded = true;
+        fetchPlotSummaryView();
+      }
+    });
+  }
+
+  function fetchPlotSummaryView() {
+    var tbody = document.getElementById('summaryTableBody');
+    if (!tbody) return;
+
+    tbody.innerHTML =
+      '<tr class="loading-row">' +
+        '<td colspan="5" style="text-align:center;padding:32px;">' +
+          '<div class="spinner"></div>' +
+        '</td>' +
+      '</tr>';
+
+    var $info = document.getElementById('summaryPaginationInfo');
+    if ($info) { $info.textContent = '加载中...'; }
+    var $ctrls = document.getElementById('summaryPaginationControls');
+    if ($ctrls) { $ctrls.innerHTML = ''; }
+
+    fetch('/api/statistics/plot-summary-view', {
+      method: 'GET',
+      headers: getAuthHeaders()
+    })
+    .then(function(res) { return handleUnauthorized(res).json(); })
+    .then(function(data) {
+      if (data.code === 200 && data.data) {
+        summaryAllData = Array.isArray(data.data) ? data.data : [data.data];
+        /* Reset region filter on reload */
+        summaryRegionFilter = '';
+        var $filter = document.getElementById('regionFilter');
+        if ($filter) { $filter.value = ''; }
+        summaryCurrentPage = 1;
+        summaryTotalPages = Math.ceil(summaryAllData.length / SUMMARY_PAGE_SIZE) || 1;
+        renderSummaryPage(1);
+      } else {
+        summaryAllData = [];
+        summaryCurrentPage = 1;
+        summaryTotalPages = 0;
+        renderSummaryPage(1);
+        showToast('error', data.message || '加载样地摘要失败');
+      }
+    })
+    .catch(function(err) {
+      if (err.message !== 'UNAUTHORIZED') {
+        summaryAllData = [];
+        summaryCurrentPage = 1;
+        summaryTotalPages = 0;
+        renderSummaryPage(1);
+        console.error('fetchPlotSummaryView error:', err);
+      }
+    });
+  }
+
+  function goToSummaryPage(page) {
+    if (page < 1 || page > summaryTotalPages || page === summaryCurrentPage) return;
+    summaryCurrentPage = page;
+    renderSummaryPage(page);
+  }
+
+  function getFilteredSummaryData() {
+    if (!summaryRegionFilter) return summaryAllData;
+    var regionName = regionMap[summaryRegionFilter];
+    if (!regionName) return summaryAllData;
+    return summaryAllData.filter(function(r) { return r.regionName === regionName; });
+  }
+
+  function renderSummaryPage(page) {
+    var tbody = document.getElementById('summaryTableBody');
+    if (!tbody) return;
+
+    var $info = document.getElementById('summaryPaginationInfo');
+    var $ctrls = document.getElementById('summaryPaginationControls');
+    var data = getFilteredSummaryData();
+    var totalItems = data.length;
+    summaryTotalPages = Math.ceil(totalItems / SUMMARY_PAGE_SIZE) || 1;
+
+    /* Empty / no data */
+    if (totalItems === 0) {
+      tbody.innerHTML =
+        '<tr class="empty-state">' +
+          '<td colspan="5">' +
+            '<div class="empty-icon">&#128269;</div>' +
+            '<p>' + (summaryTabLoaded ? '暂无匹配的样地摘要数据' : '暂无样地摘要数据') + '</p>' +
+          '</td>' +
+        '</tr>';
+      if ($info) { $info.textContent = '共 0 条记录'; }
+      if ($ctrls) { $ctrls.innerHTML = ''; }
+      return;
+    }
+
+    /* Slice current page */
+    var startIdx = (page - 1) * SUMMARY_PAGE_SIZE;
+    var pageRows = data.slice(startIdx, startIdx + SUMMARY_PAGE_SIZE);
+
+    /* Render table rows */
+    var html = '';
+    pageRows.forEach(function(row) {
+      html += '<tr>';
+      html += '<td class="plot-code">' + escapeHtml(row.plotCode || '-') + '</td>';
+      html += '<td>' + escapeHtml(row.regionName || '-') + '</td>';
+      html += '<td class="text-right">' + fmtInt(row.treeCount) + '</td>';
+      html += '<td class="text-right">' + fmtNum(row.totalVolume) + '</td>';
+      html += '<td class="text-right">' + fmtNum(row.aiPredictedVolume) + '</td>';
+      html += '</tr>';
+    });
+    tbody.innerHTML = html;
+
+    /* Update info */
+    if ($info) {
+      if (totalItems === 0) {
+        $info.textContent = '共 0 条记录';
+      } else {
+        var endItem = Math.min(page * SUMMARY_PAGE_SIZE, totalItems);
+        $info.textContent = '共 ' + totalItems + ' 条记录，显示第 ' + (startIdx + 1) + '-' + endItem + ' 条';
+      }
+    }
+
+    /* Render pagination controls */
+    if (!$ctrls) return;
+    if (summaryTotalPages <= 1) {
+      $ctrls.innerHTML = '';
+      return;
+    }
+
+    var cHtml = '';
+    var maxVisible = 5;
+
+    /* Prev button */
+    cHtml += '<button class="pagination-btn" onclick="goToSummaryPage(' + (page - 1) + ')"' +
+             (page <= 1 ? ' disabled' : '') + '>&lt;</button>';
+
+    /* Page numbers with ellipsis */
+    var startP, endP;
+    if (summaryTotalPages <= maxVisible + 2) {
+      startP = 1;
+      endP = summaryTotalPages;
+    } else {
+      startP = Math.max(1, page - Math.floor(maxVisible / 2));
+      endP = Math.min(summaryTotalPages, startP + maxVisible - 1);
+      if (endP - startP < maxVisible - 1) {
+        startP = Math.max(1, endP - maxVisible + 1);
+      }
+    }
+
+    if (startP > 1) {
+      cHtml += '<button class="pagination-btn" onclick="goToSummaryPage(1)">1</button>';
+      if (startP > 2) {
+        cHtml += '<span class="pagination-ellipsis">...</span>';
+      }
+    }
+
+    for (var i = startP; i <= endP; i++) {
+      cHtml += '<button class="pagination-btn' + (i === page ? ' active' : '') +
+               '" onclick="goToSummaryPage(' + i + ')">' + i + '</button>';
+    }
+
+    if (endP < summaryTotalPages) {
+      if (endP < summaryTotalPages - 1) {
+        cHtml += '<span class="pagination-ellipsis">...</span>';
+      }
+      cHtml += '<button class="pagination-btn" onclick="goToSummaryPage(' + summaryTotalPages + ')">' + summaryTotalPages + '</button>';
+    }
+
+    /* Next button */
+    cHtml += '<button class="pagination-btn" onclick="goToSummaryPage(' + (page + 1) + ')"' +
+             (page >= summaryTotalPages ? ' disabled' : '') + '>&gt;</button>';
+
+    $ctrls.innerHTML = cHtml;
+  }
+
   /* Expose functions to global scope for inline HTML event handlers */
   window.openCreateModal = openCreateModal;
   window.openEditModal = openEditModal;
@@ -1363,5 +1651,6 @@
   window.openBatchPlotModal = openBatchPlotModal;
   window.closeBatchPlotModal = closeBatchPlotModal;
   window.batchPlotSubmit = batchPlotSubmit;
+  window.goToSummaryPage = goToSummaryPage;
 
 })();

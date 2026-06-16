@@ -15,17 +15,17 @@ INSERT INTO user (username, password, role, real_name, phone, create_time) VALUE
 ('user',  '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iKTVKIUi', 'USER',  '普通用户',   '13900139000', '2025-06-01 08:00:00');
 
 -- ============================================================
--- 2. region — 行政区表（8条，仅保留区级，省市级已简化）
+-- 2. region — 行政区表（8条，市级）
 -- ============================================================
 INSERT INTO region (region_code, name, parent_id, level) VALUES
-('XH', '西湖区', NULL, 3),
-('YH', '余杭区', NULL, 3),
-('LA', '临安区', NULL, 3),
-('HS', '海曙区', NULL, 3),
-('YZ', '鄞州区', NULL, 3),
-('FH', '奉化区', NULL, 3),
-('LC', '鹿城区', NULL, 3),
-('OH', '瓯海区', NULL, 3);
+('330100', '杭州市', NULL, 2),
+('330200', '宁波市', NULL, 2),
+('330300', '温州市', NULL, 2),
+('330400', '嘉兴市', NULL, 2),
+('330500', '湖州市', NULL, 2),
+('330600', '绍兴市', NULL, 2),
+('330700', '金华市', NULL, 2),
+('330800', '衢州市', NULL, 2);
 
 -- ============================================================
 -- 3. species — 树种表（9条）
@@ -50,30 +50,30 @@ INSERT INTO model (model_name, algorithm, train_date, r_squared, rmse, feature_l
 
 -- ============================================================
 -- 5. plot — 样地表（15条）
--- 分布：西湖区(2个)、余杭区(2个)、临安区(1个)、海曙区(2个)、鄞州区(2个)、奉化区(2个)、鹿城区(2个)、瓯海区(2个)
+-- 分布：杭州市(2个)、宁波市(2个)、温州市(1个)、嘉兴市(2个)、湖州市(2个)、绍兴市(2个)、金华市(2个)、衢州市(2个)
 -- ============================================================
 INSERT INTO plot (plot_code, region_id, latitude, longitude, elevation, area, survey_year, plot_type, description) VALUES
-('XH-001', 1, 30.259000, 120.130000, 25.50, 0.0600, 2025, '森林样地', '西湖区龙井茶园附近天然次生林样地'),
-('XH-002', 1, 30.272000, 120.145000, 38.20, 0.0800, 2025, '森林样地', '西湖区灵隐寺周边针阔混交林样地'),
-('YH-001', 2, 30.375000, 119.980000, 15.80, 0.0500, 2025, '森林样地', '余杭区径山镇毛竹林样地'),
-('YH-002', 2, 30.412000, 120.035000, 22.40, 0.1000, 2025, '森林样地', '余杭区瓶窑镇阔叶林样地'),
-('LA-001', 3, 30.228000, 119.710000, 85.60, 0.0400, 2025, '森林样地', '临安区天目山景区针叶林样地'),
-('NB-HS-001', 4, 29.860000, 121.540000, 45.20, 0.0700, 2025, '森林样地', '海曙区四明山天然阔叶林样地'),
-('NB-HS-002', 4, 29.885000, 121.505000, 52.30, 0.0600, 2025, '森林样地', '海曙区龙观乡针阔混交林样地'),
-('NB-YZ-001', 5, 29.780000, 121.620000, 35.80, 0.0800, 2025, '森林样地', '鄞州区东钱湖附近次生林样地'),
-('NB-YZ-002', 5, 29.815000, 121.580000, 28.50, 0.0500, 2025, '固定样地', '鄞州区横溪镇松林样地'),
-('NB-FH-001', 6, 29.658000, 121.415000, 62.80, 0.0600, 2025, '森林样地', '奉化区溪口镇雪窦山针阔混交林样地'),
-('NB-FH-002', 6, 29.690000, 121.380000, 58.40, 0.0700, 2025, '森林样地', '奉化区大堰镇天然阔叶林样地'),
-('WZ-LC-001', 7, 28.020000, 120.680000, 65.40, 0.0600, 2025, '森林样地', '鹿城区仰义水库周边针叶林样地'),
-('WZ-LC-002', 7, 28.055000, 120.650000, 78.30, 0.0700, 2025, '森林样地', '鹿城区藤桥镇混交林样地'),
-('WZ-OH-001', 8, 27.960000, 120.610000, 55.20, 0.0500, 2025, '森林样地', '瓯海区泽雅景区天然林样地'),
-('WZ-OH-002', 8, 27.990000, 120.575000, 72.60, 0.0800, 2025, '临时样地', '瓯海区潘桥街道阔叶林样地');
+('XH-001', 1, 30.259000, 120.130000, 25.50, 0.0600, 2025, '森林样地', '杭州市龙井茶园附近天然次生林样地'),
+('XH-002', 1, 30.272000, 120.145000, 38.20, 0.0800, 2025, '森林样地', '杭州市灵隐寺周边针阔混交林样地'),
+('YH-001', 2, 30.375000, 119.980000, 15.80, 0.0500, 2025, '森林样地', '宁波市径山镇毛竹林样地'),
+('YH-002', 2, 30.412000, 120.035000, 22.40, 0.1000, 2025, '森林样地', '宁波市瓶窑镇阔叶林样地'),
+('LA-001', 3, 30.228000, 119.710000, 85.60, 0.0400, 2025, '森林样地', '温州市天目山景区针叶林样地'),
+('NB-HS-001', 4, 29.860000, 121.540000, 45.20, 0.0700, 2025, '森林样地', '嘉兴市四明山天然阔叶林样地'),
+('NB-HS-002', 4, 29.885000, 121.505000, 52.30, 0.0600, 2025, '森林样地', '嘉兴市龙观乡针阔混交林样地'),
+('NB-YZ-001', 5, 29.780000, 121.620000, 35.80, 0.0800, 2025, '森林样地', '湖州市东钱湖附近次生林样地'),
+('NB-YZ-002', 5, 29.815000, 121.580000, 28.50, 0.0500, 2025, '固定样地', '湖州市横溪镇松林样地'),
+('NB-FH-001', 6, 29.658000, 121.415000, 62.80, 0.0600, 2025, '森林样地', '绍兴市溪口镇雪窦山针阔混交林样地'),
+('NB-FH-002', 6, 29.690000, 121.380000, 58.40, 0.0700, 2025, '森林样地', '绍兴市大堰镇天然阔叶林样地'),
+('WZ-LC-001', 7, 28.020000, 120.680000, 65.40, 0.0600, 2025, '森林样地', '金华市仰义水库周边针叶林样地'),
+('WZ-LC-002', 7, 28.055000, 120.650000, 78.30, 0.0700, 2025, '森林样地', '金华市藤桥镇混交林样地'),
+('WZ-OH-001', 8, 27.960000, 120.610000, 55.20, 0.0500, 2025, '森林样地', '衢州市泽雅景区天然林样地'),
+('WZ-OH-002', 8, 27.990000, 120.575000, 72.60, 0.0800, 2025, '临时样地', '衢州市潘桥街道阔叶林样地');
 
 -- ============================================================
 -- 6. tree — 单木表（25条，每样地5棵）
 -- 不同树种、胸径(10-35cm)、树高(8-25m)
 -- ============================================================
--- Plot 1: XH-001（西湖区）
+-- Plot 1: XH-001（杭州市）
 INSERT INTO tree (plot_id, species_id, tree_number, dbh, height, age, health_status) VALUES
 (1, 1, 1, 18.50, 15.20, 25, '健康'),
 (1, 2, 2, 22.30, 18.70, 30, '健康'),
@@ -81,7 +81,7 @@ INSERT INTO tree (plot_id, species_id, tree_number, dbh, height, age, health_sta
 (1, 4, 4, 28.60, 22.30, 40, '健康'),
 (1, 5, 5, 12.40, 10.80, 18, '亚健康');
 
--- Plot 2: XH-002（西湖区）
+-- Plot 2: XH-002（杭州市）
 INSERT INTO tree (plot_id, species_id, tree_number, dbh, height, age, health_status) VALUES
 (2, 1, 1, 20.10, 16.80, 22, '健康'),
 (2, 3, 2, 16.80, 18.20, 12, '健康'),
@@ -89,7 +89,7 @@ INSERT INTO tree (plot_id, species_id, tree_number, dbh, height, age, health_sta
 (2, 2, 4, 25.70, 21.30, 35, '健康'),
 (2, 5, 5, 14.20, 12.50, 15, '健康');
 
--- Plot 3: YH-001（余杭区）
+-- Plot 3: YH-001（宁波市）
 INSERT INTO tree (plot_id, species_id, tree_number, dbh, height, age, health_status) VALUES
 (3, 1, 1, 30.20, 23.10, 35, '健康'),
 (3, 4, 2, 35.00, 25.00, 50, '健康'),
@@ -97,7 +97,7 @@ INSERT INTO tree (plot_id, species_id, tree_number, dbh, height, age, health_sta
 (3, 3, 4, 12.80, 15.40, 8,  '健康'),
 (3, 5, 5, 17.30, 14.20, 20, '亚健康');
 
--- Plot 4: YH-002（余杭区）
+-- Plot 4: YH-002（宁波市）
 INSERT INTO tree (plot_id, species_id, tree_number, dbh, height, age, health_status) VALUES
 (4, 2, 1, 24.10, 20.80, 32, '健康'),
 (4, 1, 2, 15.60, 13.50, 20, '健康'),
@@ -105,7 +105,7 @@ INSERT INTO tree (plot_id, species_id, tree_number, dbh, height, age, health_sta
 (4, 3, 4, 18.00, 19.60, 11, '健康'),
 (4, 5, 5, 26.80, 21.50, 38, '健康');
 
--- Plot 5: LA-001（临安区）
+-- Plot 5: LA-001（温州市）
 INSERT INTO tree (plot_id, species_id, tree_number, dbh, height, age, health_status) VALUES
 (5, 2, 1, 21.40, 17.90, 28, '健康'),
 (5, 1, 2, 27.50, 22.00, 38, '健康'),
@@ -118,7 +118,7 @@ INSERT INTO tree (plot_id, species_id, tree_number, dbh, height, age, health_sta
 -- 树种ID: 1=马尾松,2=杉木,3=毛竹,4=栎类,5=其他硬阔,6=枫香,7=樟树,8=苦槠,9=木荷
 -- ============================================================
 
--- Plot 6: NB-HS-001（海曙区）
+-- Plot 6: NB-HS-001（嘉兴市）
 INSERT INTO tree (plot_id, species_id, tree_number, dbh, height, age, health_status) VALUES
 (6, 8, 'T01', 22.50, 18.30, 28, '健康'),
 (6, 7, 'T02', 16.80, 14.50, 22, '健康'),
@@ -126,7 +126,7 @@ INSERT INTO tree (plot_id, species_id, tree_number, dbh, height, age, health_sta
 (6, 1, 'T04', 19.40, 16.70, 26, '健康'),
 (6, 9, 'T05', 14.60, 12.30, 18, '亚健康');
 
--- Plot 7: NB-HS-002（海曙区）
+-- Plot 7: NB-HS-002（嘉兴市）
 INSERT INTO tree (plot_id, species_id, tree_number, dbh, height, age, health_status) VALUES
 (7, 7, 'T01', 25.30, 20.50, 32, '健康'),
 (7, 2, 'T02', 18.70, 16.20, 24, '健康'),
@@ -134,7 +134,7 @@ INSERT INTO tree (plot_id, species_id, tree_number, dbh, height, age, health_sta
 (7, 6, 'T04', 20.10, 17.80, 27, '健康'),
 (7, 1, 'T05', 15.50, 13.40, 19, '健康');
 
--- Plot 8: NB-YZ-001（鄞州区）
+-- Plot 8: NB-YZ-001（湖州市）
 INSERT INTO tree (plot_id, species_id, tree_number, dbh, height, age, health_status) VALUES
 (8, 1, 'T01', 23.60, 19.20, 30, '健康'),
 (8, 4, 'T02', 34.50, 25.80, 48, '健康'),
@@ -142,7 +142,7 @@ INSERT INTO tree (plot_id, species_id, tree_number, dbh, height, age, health_sta
 (8, 2, 'T04', 21.80, 18.40, 29, '健康'),
 (8, 7, 'T05', 26.40, 21.70, 35, '健康');
 
--- Plot 9: NB-YZ-002（鄞州区）
+-- Plot 9: NB-YZ-002（湖州市）
 INSERT INTO tree (plot_id, species_id, tree_number, dbh, height, age, health_status) VALUES
 (9, 3, 'T01', 13.50, 18.20, 9,  '健康'),
 (9, 6, 'T02', 18.90, 16.00, 24, '健康'),
@@ -150,7 +150,7 @@ INSERT INTO tree (plot_id, species_id, tree_number, dbh, height, age, health_sta
 (9, 8, 'T04', 30.20, 23.40, 42, '健康'),
 (9, 5, 'T05', 16.30, 14.80, 20, '亚健康');
 
--- Plot 10: NB-FH-001（奉化区）
+-- Plot 10: NB-FH-001（绍兴市）
 INSERT INTO tree (plot_id, species_id, tree_number, dbh, height, age, health_status) VALUES
 (10, 7, 'T01', 22.00, 18.90, 30, '健康'),
 (10, 4, 'T02', 29.50, 23.10, 40, '健康'),
@@ -158,7 +158,7 @@ INSERT INTO tree (plot_id, species_id, tree_number, dbh, height, age, health_sta
 (10, 9, 'T04', 15.80, 13.60, 17, '健康'),
 (10, 1, 'T05', 24.70, 20.20, 33, '健康');
 
--- Plot 11: NB-FH-002（奉化区）
+-- Plot 11: NB-FH-002（绍兴市）
 INSERT INTO tree (plot_id, species_id, tree_number, dbh, height, age, health_status) VALUES
 (11, 8, 'T01', 32.10, 24.60, 46, '健康'),
 (11, 6, 'T02', 19.30, 16.50, 25, '健康'),
@@ -166,7 +166,7 @@ INSERT INTO tree (plot_id, species_id, tree_number, dbh, height, age, health_sta
 (11, 7, 'T04', 27.50, 22.30, 37, '健康'),
 (11, 5, 'T05', 18.40, 15.70, 23, '健康');
 
--- Plot 12: WZ-LC-001（鹿城区）
+-- Plot 12: WZ-LC-001（金华市）
 INSERT INTO tree (plot_id, species_id, tree_number, dbh, height, age, health_status) VALUES
 (12, 2, 'T01', 24.30, 20.60, 33, '健康'),
 (12, 1, 'T02', 16.70, 14.20, 21, '健康'),
@@ -174,7 +174,7 @@ INSERT INTO tree (plot_id, species_id, tree_number, dbh, height, age, health_sta
 (12, 4, 'T04', 33.80, 24.90, 47, '健康'),
 (12, 6, 'T05', 17.90, 15.40, 22, '健康');
 
--- Plot 13: WZ-LC-002（鹿城区）
+-- Plot 13: WZ-LC-002（金华市）
 INSERT INTO tree (plot_id, species_id, tree_number, dbh, height, age, health_status) VALUES
 (13, 1, 'T01', 20.50, 17.20, 26, '健康'),
 (13, 7, 'T02', 24.80, 20.10, 31, '健康'),
@@ -182,7 +182,7 @@ INSERT INTO tree (plot_id, species_id, tree_number, dbh, height, age, health_sta
 (13, 9, 'T04', 18.20, 15.80, 22, '健康'),
 (13, 2, 'T05', 22.90, 19.40, 30, '健康');
 
--- Plot 14: WZ-OH-001（瓯海区）
+-- Plot 14: WZ-OH-001（衢州市）
 INSERT INTO tree (plot_id, species_id, tree_number, dbh, height, age, health_status) VALUES
 (14, 8, 'T01', 27.30, 22.10, 36, '健康'),
 (14, 6, 'T02', 21.60, 18.50, 28, '健康'),
@@ -190,7 +190,7 @@ INSERT INTO tree (plot_id, species_id, tree_number, dbh, height, age, health_sta
 (14, 3, 'T04', 13.80, 16.20, 9,  '健康'),
 (14, 5, 'T05', 19.10, 16.80, 24, '健康');
 
--- Plot 15: WZ-OH-002（瓯海区）
+-- Plot 15: WZ-OH-002（衢州市）
 INSERT INTO tree (plot_id, species_id, tree_number, dbh, height, age, health_status) VALUES
 (15, 7, 'T01', 23.10, 19.80, 31, '健康'),
 (15, 8, 'T02', 28.60, 22.80, 39, '健康'),

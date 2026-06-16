@@ -1,0 +1,625 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>样地地图 — AI森林资源调查系统</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.css" />
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    /* ===== Map Page ===== */
+    .map-page {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      background: var(--color-bg, #f4f6f4);
+    }
+
+    .map-page .navbar {
+      background: rgba(27, 67, 50, 0.92);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      box-shadow: 0 1px 8px rgba(0, 0, 0, 0.06);
+    }
+
+    /* Map container fills remaining viewport */
+    html, body {
+      height: 100%;
+    }
+    .map-wrapper {
+      flex: 1;
+      display: flex;
+      position: relative;
+      min-height: 0;
+    }
+
+    #map {
+      width: 100%;
+      flex: 1;
+      min-height: 400px;
+      z-index: 1;
+    }
+
+    /* ===== Floating Side Panel ===== */
+    .map-panel {
+      position: absolute;
+      top: 16px;
+      left: 16px;
+      z-index: 1000;
+      width: 300px;
+      max-height: calc(100% - 32px);
+      background: var(--color-surface, #fff);
+      border-radius: var(--radius-lg, 12px);
+      box-shadow: var(--shadow-lg, 0 8px 30px rgba(0,0,0,0.10));
+      border: 1px solid var(--color-border-light, #eef2ed);
+      display: flex;
+      flex-direction: column;
+      overflow-y: auto;
+      transition: transform 0.25s ease, opacity 0.25s ease;
+    }
+
+    .map-panel-header {
+      padding: 16px 20px 12px;
+      border-bottom: 1px solid var(--color-border-light, #eef2ed);
+    }
+
+    .map-panel-header h2 {
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--color-primary-dark, #1b4332);
+      margin: 0 0 4px;
+    }
+
+    .map-panel-header .panel-subtitle {
+      font-size: 0.8rem;
+      color: var(--color-text-muted, #b2bec3);
+    }
+
+    /* Region filter in panel */
+    .map-panel-filter {
+      padding: 12px 20px;
+      border-bottom: 1px solid var(--color-border-light, #eef2ed);
+    }
+
+    .map-panel-filter select {
+      width: 100%;
+      padding: 8px 12px;
+      border: 1px solid var(--color-border, #dde5db);
+      border-radius: var(--radius-sm, 4px);
+      font-size: 13px;
+      font-family: var(--font-family);
+      color: var(--color-text, #2d3436);
+      background: var(--color-surface, #fff);
+      cursor: pointer;
+      transition: border-color 0.15s ease;
+    }
+
+    .map-panel-filter select:focus {
+      outline: none;
+      border-color: var(--color-primary, #2c6e49);
+      box-shadow: 0 0 0 3px rgba(44,110,73,0.1);
+    }
+
+    /* Export action buttons */
+    .map-panel-actions {
+      display: flex;
+      gap: 6px;
+      padding: 10px 20px 12px;
+      border-bottom: 1px solid var(--color-border-light, #eef2ed);
+    }
+
+    .btn-export {
+      flex: 1;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      padding: 7px 0;
+      font-size: 12px;
+      font-weight: 600;
+      font-family: var(--font-family);
+      border: 1px solid var(--color-primary, #2c6e49);
+      border-radius: var(--radius-sm, 4px);
+      cursor: pointer;
+      transition: all 0.15s ease;
+      background: var(--color-primary, #2c6e49);
+      color: #fff;
+    }
+    .btn-export:hover {
+      background: var(--color-primary-dark, #1b4332);
+      border-color: var(--color-primary-dark, #1b4332);
+    }
+    .tool-hint {
+      display: none;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 20px;
+      background: #fff8e1;
+      border-bottom: 1px solid #ffe082;
+      font-size: 12px;
+      color: #795548;
+    }
+    .tool-hint.visible {
+      display: flex;
+    }
+    .tool-hint .hint-text {
+      flex: 1;
+    }
+    .btn-clear-inline {
+      flex: none;
+      padding: 3px 10px;
+      font-size: 11px;
+      font-weight: 600;
+      border: 1px solid #e74c3c;
+      border-radius: 3px;
+      cursor: pointer;
+      background: #fff;
+      color: #e74c3c;
+      line-height: 1.4;
+      white-space: nowrap;
+      transition: all 0.15s ease;
+      font-family: var(--font-family);
+    }
+    .btn-clear-inline:hover {
+      background: #fff5f5;
+      border-color: #c0392b;
+      color: #c0392b;
+    }
+
+    /* ===== Selection Tools (Dropdown) ===== */
+    .map-panel-tools {
+      padding: 8px 20px 10px;
+      border-bottom: 1px solid var(--color-border-light, #eef2ed);
+    }
+    .tool-group {
+      width: 100%;
+    }
+    .tool-label {
+      display: block;
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--color-text-secondary, #636e72);
+      margin-bottom: 4px;
+    }
+    .tool-row {
+      display: flex;
+      gap: 4px;
+      align-items: center;
+    }
+    .draw-select {
+      flex: 1;
+      padding: 6px 8px;
+      border: 1px solid var(--color-border, #dde5db);
+      border-radius: var(--radius-sm, 4px);
+      font-size: 12px;
+      font-family: var(--font-family);
+      color: var(--color-text, #2d3436);
+      background: var(--color-surface, #fff);
+      cursor: pointer;
+      transition: border-color 0.15s ease;
+      -webkit-appearance: none;
+      appearance: none;
+      background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg viewBox='0 0 12 12' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M3 5l3 3 3-3' stroke='%23636e72' stroke-width='1.5' fill='none'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 8px center;
+      background-size: 10px;
+    }
+    .draw-select:focus {
+      outline: none;
+      border-color: var(--color-primary, #2c6e49);
+      box-shadow: 0 0 0 3px rgba(44,110,73,0.1);
+    }
+
+    /* Plot list inside panel */
+    .map-panel-list {
+      padding: 8px 0;
+    }
+
+    .map-panel-list .plot-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 20px;
+      cursor: pointer;
+      transition: background 0.15s ease;
+      border-left: 3px solid transparent;
+    }
+
+    .map-panel-list .plot-item:hover {
+      background: var(--color-primary-pale, #e8f5e9);
+    }
+
+    .map-panel-list .plot-item.active {
+      background: var(--color-primary-pale, #e8f5e9);
+      border-left-color: var(--color-primary, #2c6e49);
+    }
+
+    .plot-item .plot-marker-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--color-primary, #2c6e49);
+      flex-shrink: 0;
+    }
+
+    .plot-item .plot-item-info {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .plot-item .plot-item-code {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--color-primary-dark, #1b4332);
+      font-family: var(--font-mono, monospace);
+    }
+
+    .plot-item .plot-item-meta {
+      font-size: 11px;
+      color: var(--color-text-muted, #b2bec3);
+      margin-top: 2px;
+    }
+
+    .plot-item .plot-item-region {
+      font-size: 11px;
+      color: var(--color-text-secondary, #636e72);
+      background: var(--color-bg, #f4f6f4);
+      padding: 1px 8px;
+      border-radius: 10px;
+    }
+
+    .map-panel-list .empty-msg {
+      text-align: center;
+      padding: 32px 20px;
+      color: var(--color-text-muted, #b2bec3);
+      font-size: 13px;
+    }
+
+    /* Loading state */
+    .map-panel-list .loading-msg {
+      text-align: center;
+      padding: 32px 20px;
+      color: var(--color-text-muted, #b2bec3);
+      font-size: 13px;
+    }
+
+    /* ===== Custom Leaflet Popup ===== */
+    .leaflet-popup-content-wrapper {
+      border-radius: var(--radius-md, 8px);
+      box-shadow: var(--shadow-md, 0 4px 12px rgba(0,0,0,0.08));
+      padding: 0;
+    }
+
+    .leaflet-popup-content {
+      margin: 0;
+      padding: 14px 16px;
+      font-family: var(--font-family);
+      min-width: 200px;
+    }
+
+    .plot-popup h3 {
+      margin: 0 0 6px;
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--color-primary-dark, #1b4332);
+    }
+
+    .plot-popup .popup-code {
+      font-family: var(--font-mono, monospace);
+      font-size: 12px;
+      color: var(--color-text-muted, #b2bec3);
+      margin-bottom: 8px;
+    }
+
+    .plot-popup .popup-row {
+      display: flex;
+      justify-content: space-between;
+      font-size: 13px;
+      padding: 3px 0;
+      color: var(--color-text, #2d3436);
+    }
+
+    .plot-popup .popup-row .popup-label {
+      color: var(--color-text-secondary, #636e72);
+    }
+
+    .plot-popup .popup-actions {
+      margin-top: 10px;
+      padding-top: 10px;
+      border-top: 1px solid var(--color-border-light, #eef2ed);
+      text-align: center;
+    }
+
+    .plot-popup .popup-actions a {
+      display: inline-block;
+      padding: 6px 18px;
+      background: var(--color-primary, #2c6e49);
+      color: #fff;
+      border-radius: var(--radius-sm, 4px);
+      font-size: 13px;
+      font-weight: 500;
+      text-decoration: none;
+      transition: background 0.15s ease;
+    }
+
+    .plot-popup .popup-actions a:hover {
+      background: var(--color-primary-dark, #1b4332);
+    }
+
+    /* ===== Legend ===== */
+    .map-legend {
+      position: absolute;
+      bottom: 30px;
+      right: 16px;
+      z-index: 1000;
+      background: var(--color-surface, #fff);
+      border-radius: var(--radius-md, 8px);
+      box-shadow: var(--shadow-md, 0 4px 12px rgba(0,0,0,0.08));
+      border: 1px solid var(--color-border-light, #eef2ed);
+      padding: 10px 14px;
+      font-size: 12px;
+      color: var(--color-text-secondary, #636e72);
+    }
+
+    .map-legend .legend-title {
+      font-weight: 600;
+      color: var(--color-text, #2d3436);
+      margin-bottom: 4px;
+    }
+
+    .map-legend .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 2px 0;
+    }
+
+    .map-legend .legend-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--color-primary, #2c6e49);
+      flex-shrink: 0;
+    }
+
+    /* ===== Prediction Section ===== */
+    .map-panel-predict {
+      border-top: 1px solid var(--color-border-light, #eef2ed);
+      padding: 10px 16px 14px;
+      flex-shrink: 0;
+      background: var(--color-surface, #fff);
+    }
+    .predict-header {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--color-primary-dark, #1b4332);
+      margin-bottom: 8px;
+    }
+    .predict-header .predict-badge {
+      font-weight: 400;
+      font-size: 10px;
+      color: var(--color-text-muted, #b2bec3);
+      margin-left: 4px;
+    }
+    .predict-form {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+    .predict-row {
+      display: flex;
+      gap: 5px;
+      align-items: center;
+    }
+    .predict-select {
+      flex: 1;
+      padding: 4px 6px;
+      font-size: 11px;
+      font-family: var(--font-family);
+      border: 1px solid var(--color-border, #dde5db);
+      border-radius: var(--radius-sm, 4px);
+      color: var(--color-text, #2d3436);
+      background: var(--color-surface, #fff);
+    }
+    .predict-select:focus {
+      outline: none;
+      border-color: var(--color-primary, #2c6e49);
+    }
+    .btn-predict-sm {
+      padding: 5px 10px;
+      font-size: 11px;
+      font-weight: 600;
+      font-family: var(--font-family);
+      border: none;
+      border-radius: var(--radius-sm, 4px);
+      cursor: pointer;
+      white-space: nowrap;
+      background: linear-gradient(135deg, #2c6e49, #4c956c);
+      color: #fff;
+      transition: opacity 0.15s;
+      line-height: 1.4;
+    }
+    .btn-predict-sm:hover { opacity: 0.88; }
+    .btn-predict-sm:disabled { opacity: 0.5; cursor: not-allowed; }
+    .predict-result {
+      margin-top: 8px;
+      display: none;
+      text-align: center;
+      font-size: 11px;
+      color: var(--color-text-muted, #b2bec3);
+    }
+    .predict-result.visible { display: block; }
+    .predict-info {
+      font-size: 11px;
+      color: var(--color-text-muted, #b2bec3);
+      padding: 2px 0;
+    }
+
+    /* Inline prediction result on plot items */
+    .plot-item-predict {
+      font-size: 10px;
+      margin-top: 2px;
+    }
+    .plot-item-predict .pr-success { color: var(--color-primary-dark, #1b4332); font-weight: 600; }
+    .plot-item-predict .pr-fail { color: #e74c3c; }
+
+    /* ===== Time-Series Chart Section ===== */
+    .map-panel-chart {
+      border-top: 1px solid var(--color-border-light, #eef2ed);
+      padding: 10px 16px 14px;
+      flex-shrink: 0;
+      background: var(--color-surface, #fff);
+    }
+    .chart-header {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--color-primary-dark, #1b4332);
+      margin-bottom: 8px;
+    }
+    .chart-header .chart-badge {
+      font-weight: 400;
+      font-size: 10px;
+      color: var(--color-text-muted, #b2bec3);
+      margin-left: 4px;
+    }
+    #volumeChart {
+      width: 100%;
+      height: 200px;
+    }
+    .chart-empty {
+      text-align: center;
+      padding: 24px 16px;
+      font-size: 12px;
+      color: var(--color-text-muted, #b2bec3);
+    }
+    .chart-empty .chart-empty-icon {
+      font-size: 28px;
+      display: block;
+      margin-bottom: 6px;
+    }
+
+    /* ===== Responsive ===== */
+    @media (max-width: 768px) {
+      .map-panel {
+        width: 260px;
+        top: 12px;
+        left: 12px;
+        max-height: calc(100% - 24px);
+      }
+      .map-panel-header { padding: 12px 16px 10px; }
+      .map-panel-filter { padding: 8px 16px; }
+      .map-panel-list .plot-item { padding: 8px 16px; }
+    }
+  </style>
+</head>
+<body class="map-page">
+
+  <!-- ===== Navbar ===== -->
+  <nav class="navbar">
+    <a href="dashboard.html" class="navbar-brand">
+      <span class="logo-icon">&#9730;</span>
+      <span>AI森林资源调查系统</span>
+    </a>
+    <div class="navbar-nav">
+      <a href="dashboard.html">仪表盘</a>
+      <a href="plots.html">样地管理</a>
+      <a href="map.html" class="active">样地地图</a>
+      <a href="statistics.html">分区统计</a>
+    </div>
+    <div class="navbar-user">
+      <span id="navbarUsername">用户</span>
+      <button class="btn-logout" id="btnLogout">退出登录</button>
+    </div>
+  </nav>
+
+  <!-- ===== Map Container ===== -->
+  <div class="map-wrapper">
+    <div id="map"></div>
+
+    <!-- Side Panel -->
+    <div class="map-panel" id="mapPanel">
+      <div class="map-panel-header">
+        <h2>样地分布</h2>
+        <div class="panel-subtitle" id="panelSubtitle">加载中…</div>
+      </div>
+      <div class="map-panel-filter">
+        <select id="regionFilter">
+          <option value="">全部区域</option>
+        </select>
+      </div>
+      <div class="map-panel-actions">
+        <button class="btn-export" id="btnExportCsv" title="导出当前筛选结果（含树木和蓄积量数据）为CSV文件">
+          <span>⬇</span> 导出CSV
+        </button>
+      </div>
+      <div class="map-panel-tools" id="panelTools">
+        <div class="tool-group">
+          <label class="tool-label">框选区域 — 在地图上绘制形状筛选样地</label>
+          <div class="tool-row">
+            <select id="drawModeSelect" class="draw-select">
+              <option value="">— 选择绘制方式 —</option>
+              <option value="polygon">⬡ 多边形框选 — 点击顶点绘制任意多边形</option>
+              <option value="circle">◯ 圆形框选 — 点击圆心拖动半径</option>
+              <option value="rectangle">▢ 矩形框选 — 拖拽两个对角点</option>
+            </select>
+          </div>
+        </div>
+      </div>
+      <div class="tool-hint" id="toolHint">
+        <span class="hint-text" id="toolHintText"></span>
+        <button class="btn-clear-inline" id="btnClearSelect">清除</button>
+      </div>
+      <div class="map-panel-list" id="plotList">
+        <div class="loading-msg">正在加载样地数据…</div>
+      </div>
+
+      <!-- ===== AI Prediction Section ===== -->
+      <div class="map-panel-predict" id="predictionSection">
+        <div class="predict-header">
+          🤖 AI蓄积预测
+          <span class="predict-badge">Flask AI服务</span>
+        </div>
+        <div class="predict-form">
+          <div class="predict-row">
+            <span class="predict-info" id="predictSelectionInfo">请用框选工具在地图上选择样地</span>
+          </div>
+          <div class="predict-row">
+            <select id="predictModelSelect" class="predict-select"><option value="">-- 加载模型 --</option></select>
+            <button class="btn-predict-sm" id="btnPredictSelected">⚡预测选中</button>
+            <button class="btn-predict-sm" id="btnPredictAll" style="background:linear-gradient(135deg,#1b4332,#2d6a4f);">预测全部</button>
+          </div>
+        </div>
+        <div class="predict-result" id="predictResult"></div>
+      </div>
+
+      <!-- ===== Time-Series Volume Chart Section ===== -->
+      <div class="map-panel-chart" id="chartSection">
+        <div class="chart-header">
+          &#x1F4C8; 蓄积量时序
+          <span class="chart-badge">实测数据</span>
+        </div>
+        <div id="volumeChart"></div>
+        <div class="chart-empty" id="chartEmpty">
+          <span class="chart-empty-icon">&#x1F4CA;</span>
+          框选样地后将自动显示蓄积量时序图
+        </div>
+      </div>
+    </div>
+
+    <!-- Legend -->
+    <div class="map-legend">
+      <div class="legend-title">图例</div>
+      <div class="legend-item">
+        <span class="legend-dot"></span>
+        <span>调查样地</span>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/echarts@5/dist/echarts.min.js"></script>
+  <script src="js/map.js"></script>
+</body>
+</html>

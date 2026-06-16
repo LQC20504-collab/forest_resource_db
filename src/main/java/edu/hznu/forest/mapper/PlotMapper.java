@@ -1,6 +1,7 @@
 package edu.hznu.forest.mapper;
 
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
 import edu.hznu.forest.entity.Plot;
 import java.util.List;
 
@@ -16,6 +17,12 @@ public interface PlotMapper {
     List<Long> findAllPlotIds();
 
     Plot findByPlotCode(String plotCode);
+
+    List<java.util.Map<String, Object>> exportData(@Param("regionId") Long regionId,
+                                                    @Param("minLng") Double minLng,
+                                                    @Param("minLat") Double minLat,
+                                                    @Param("maxLng") Double maxLng,
+                                                    @Param("maxLat") Double maxLat);
 
     int insert(Plot plot);
 

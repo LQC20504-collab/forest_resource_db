@@ -44,8 +44,6 @@ region-test.json
 deep-research-report*.md
 docx_template.txt
 
-### OpenCode config ###
-.omo/
 
 ### Reference papers (not project code) ###
 中国林草遥感技术研究与应用*.md
@@ -57,5 +55,26 @@ Forest inventory with high-density*.md
 Regional Forest Volume Estimation*.md
 Remote sensing support for national*.md
 
+### Report (not project code) ###
+报告*.md
+
 ### Maven wrapper (keep mvnw, skip jar) ###
 .mvn/wrapper/maven-wrapper.jar
+
+### OpenCode runtime ###
+.omo/
+
+### Python cache ###
+__pycache__/
+*.pyc
+
+### Utility scripts ###
+create_ppt.js
+test-plots.csv
+test-trees.csv
+
+### Media / screenshots ###
+media/
+
+### Presentation ###
+大作业汇报.pptx

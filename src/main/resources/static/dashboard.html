@@ -22,8 +22,10 @@
 
     /* Navbar — identical to login but always uses the dark style */
     .dashboard-page .navbar {
-      background: var(--color-primary-dark);
-      box-shadow: var(--shadow-md);
+      background: rgba(27, 67, 50, 0.92);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      box-shadow: 0 1px 8px rgba(0, 0, 0, 0.06);
     }
 
     /* Main content */
@@ -556,6 +558,7 @@
     <div class="navbar-nav">
       <a href="dashboard.html" class="active">仪表盘</a>
       <a href="plots.html">样地管理</a>
+      <a href="map.html">样地地图</a>
       <a href="statistics.html">分区统计</a>
     </div>
     <div class="navbar-user">

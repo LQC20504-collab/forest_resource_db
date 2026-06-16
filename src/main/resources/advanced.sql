@@ -18,15 +18,25 @@ CREATE PROCEDURE sp_region_volume_summary(IN rid BIGINT)
 BEGIN
     SELECT r.name AS region_name,
            COUNT(DISTINCT p.plot_id) AS plot_count,
-           COUNT(DISTINCT t.tree_id) AS tree_count,
-           COALESCE(SUM(v.measured_volume), 0) AS total_measured_volume,
-           COALESCE(SUM(ap.predicted_volume), 0) AS total_predicted_volume,
-           COALESCE(SUM(v.measured_volume), 0) - COALESCE(SUM(ap.predicted_volume), 0) AS total_error
+           COALESCE(SUM(m.tree_count), 0) AS tree_count,
+           COALESCE(SUM(m.measured_volume), 0) AS total_measured_volume,
+           COALESCE(SUM(pr.predicted_volume), 0) AS total_predicted_volume,
+           COALESCE(SUM(m.measured_volume), 0) - COALESCE(SUM(pr.predicted_volume), 0) AS total_error
     FROM region r
     LEFT JOIN plot p ON r.region_id = p.region_id
-    LEFT JOIN tree t ON p.plot_id = t.plot_id
-    LEFT JOIN volume v ON t.tree_id = v.tree_id
-    LEFT JOIN ai_prediction ap ON p.plot_id = ap.plot_id
+    LEFT JOIN (
+        SELECT t.plot_id,
+               COUNT(DISTINCT t.tree_id) AS tree_count,
+               SUM(v.measured_volume) AS measured_volume
+        FROM tree t
+        LEFT JOIN volume v ON t.tree_id = v.tree_id
+        GROUP BY t.plot_id
+    ) m ON p.plot_id = m.plot_id
+    LEFT JOIN (
+        SELECT plot_id, SUM(predicted_volume) AS predicted_volume
+        FROM ai_prediction
+        GROUP BY plot_id
+    ) pr ON p.plot_id = pr.plot_id
     WHERE r.region_id = rid
     GROUP BY r.region_id, r.name;
 END$$
@@ -45,14 +55,24 @@ CREATE PROCEDURE sp_all_regions_summary()
 BEGIN
     SELECT r.region_id, r.name AS region_name,
            COUNT(DISTINCT p.plot_id) AS plot_count,
-           COUNT(DISTINCT t.tree_id) AS tree_count,
-           COALESCE(SUM(v.measured_volume), 0) AS total_measured_volume,
-           COALESCE(SUM(ap.predicted_volume), 0) AS total_predicted_volume
+           COALESCE(SUM(m.tree_count), 0) AS tree_count,
+           COALESCE(SUM(m.measured_volume), 0) AS total_measured_volume,
+           COALESCE(SUM(pr.predicted_volume), 0) AS total_predicted_volume
     FROM region r
     LEFT JOIN plot p ON r.region_id = p.region_id
-    LEFT JOIN tree t ON p.plot_id = t.plot_id
-    LEFT JOIN volume v ON t.tree_id = v.tree_id
-    LEFT JOIN ai_prediction ap ON p.plot_id = ap.plot_id
+    LEFT JOIN (
+        SELECT t.plot_id,
+               COUNT(DISTINCT t.tree_id) AS tree_count,
+               SUM(v.measured_volume) AS measured_volume
+        FROM tree t
+        LEFT JOIN volume v ON t.tree_id = v.tree_id
+        GROUP BY t.plot_id
+    ) m ON p.plot_id = m.plot_id
+    LEFT JOIN (
+        SELECT plot_id, SUM(predicted_volume) AS predicted_volume
+        FROM ai_prediction
+        GROUP BY plot_id
+    ) pr ON p.plot_id = pr.plot_id
     GROUP BY r.region_id, r.name
     ORDER BY r.region_id;
 END$$
@@ -86,15 +106,25 @@ DELIMITER ;
 CREATE OR REPLACE VIEW v_region_stats AS
 SELECT r.region_id, r.name AS region_name,
        COUNT(DISTINCT p.plot_id) AS plot_count,
-       COUNT(DISTINCT t.tree_id) AS tree_count,
-       COALESCE(SUM(v.measured_volume), 0) AS total_measured_volume,
-       COALESCE(SUM(ap.predicted_volume), 0) AS total_predicted_volume,
-       COALESCE(SUM(v.measured_volume), 0) - COALESCE(SUM(ap.predicted_volume), 0) AS avg_error
+       COALESCE(SUM(m.tree_count), 0) AS tree_count,
+       COALESCE(SUM(m.measured_volume), 0) AS total_measured_volume,
+       COALESCE(SUM(pr.predicted_volume), 0) AS total_predicted_volume,
+       COALESCE(SUM(m.measured_volume), 0) - COALESCE(SUM(pr.predicted_volume), 0) AS avg_error
 FROM region r
 LEFT JOIN plot p ON r.region_id = p.region_id
-LEFT JOIN tree t ON p.plot_id = t.plot_id
-LEFT JOIN volume v ON t.tree_id = v.tree_id
-LEFT JOIN ai_prediction ap ON p.plot_id = ap.plot_id
+LEFT JOIN (
+    SELECT t.plot_id,
+           COUNT(DISTINCT t.tree_id) AS tree_count,
+           SUM(v.measured_volume) AS measured_volume
+    FROM tree t
+    LEFT JOIN volume v ON t.tree_id = v.tree_id
+    GROUP BY t.plot_id
+) m ON p.plot_id = m.plot_id
+LEFT JOIN (
+    SELECT plot_id, SUM(predicted_volume) AS predicted_volume
+    FROM ai_prediction
+    GROUP BY plot_id
+) pr ON p.plot_id = pr.plot_id
 GROUP BY r.region_id, r.name;
 
 -- ============================================================
@@ -105,12 +135,21 @@ GROUP BY r.region_id, r.name;
 
 CREATE OR REPLACE VIEW v_plot_summary AS
 SELECT p.plot_id, p.plot_code, r.name AS region_name,
-       COUNT(DISTINCT t.tree_id) AS tree_count,
-       COALESCE(SUM(v.measured_volume), 0) AS total_volume,
-       COALESCE(ap.predicted_volume, 0) AS ai_predicted_volume
+       COALESCE(m.tree_count, 0) AS tree_count,
+       COALESCE(m.measured_volume, 0) AS total_volume,
+       COALESCE(pr.predicted_volume, 0) AS ai_predicted_volume
 FROM plot p
 LEFT JOIN region r ON p.region_id = r.region_id
-LEFT JOIN tree t ON p.plot_id = t.plot_id
-LEFT JOIN volume v ON t.tree_id = v.tree_id
-LEFT JOIN ai_prediction ap ON p.plot_id = ap.plot_id
-GROUP BY p.plot_id, p.plot_code, r.name, ap.predicted_volume;
+LEFT JOIN (
+    SELECT t.plot_id,
+           COUNT(DISTINCT t.tree_id) AS tree_count,
+           SUM(v.measured_volume) AS measured_volume
+    FROM tree t
+    LEFT JOIN volume v ON t.tree_id = v.tree_id
+    GROUP BY t.plot_id
+) m ON p.plot_id = m.plot_id
+LEFT JOIN (
+    SELECT plot_id, SUM(predicted_volume) AS predicted_volume
+    FROM ai_prediction
+    GROUP BY plot_id
+) pr ON p.plot_id = pr.plot_id;

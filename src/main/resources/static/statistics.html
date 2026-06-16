@@ -397,6 +397,10 @@
       color: var(--color-text-muted);
     }
 
+    .text-right {
+      text-align: right;
+    }
+
     /* --- Responsive --- */
     @media (max-width: 768px) {
       .stats-summary {
@@ -454,6 +458,7 @@
     <div class="navbar-nav">
       <a href="dashboard.html">仪表盘</a>
       <a href="plots.html">样地管理</a>
+      <a href="map.html">样地地图</a>
       <a href="statistics.html" class="active">分区统计</a>
     </div>
 
@@ -472,71 +477,75 @@
       <p>按区域汇总蓄积量数据，支持AI模型预测</p>
     </div>
 
-    <!-- Summary Cards -->
-    <div class="stats-summary" id="statsSummary">
-      <div class="stat-card" title="当前筛选条件下统计的行政区数量">
-        <div class="stat-card-label">区域总数</div>
-        <div class="stat-card-value" id="statRegionCount">--</div>
-      </div>
-      <div class="stat-card" title="当前筛选区域内的样地总数量">
-        <div class="stat-card-label">样地总数</div>
-        <div class="stat-card-value" id="statPlotCount">--</div>
-      </div>
-      <div class="stat-card" title="通过实地测量计算得到的蓄积量总和，单位立方米">
-        <div class="stat-card-label">实测蓄积</div>
-        <div class="stat-card-value" id="statMeasuredVolume">-- <small>m³</small></div>
-      </div>
-      <div class="stat-card" title="通过AI模型预测的蓄积量总和，单位立方米">
-        <div class="stat-card-label">预测蓄积</div>
-        <div class="stat-card-value" id="statPredictedVolume">-- <small>m³</small></div>
-      </div>
-    </div>
+    <!-- ========== 分区汇总 ========== -->
 
-    <!-- Toolbar: Region Filter + Refresh -->
-    <div class="toolbar">
-      <div class="toolbar-left">
-        <span class="toolbar-label">选择区域：</span>
-        <select class="select-control" id="regionFilter" title="选择特定行政区查看该区域的详细统计数据">
-          <option value="all">全部区域</option>
-        </select>
-      </div>
-      <button class="btn-icon" id="btnRefresh" title="重新加载统计数据" aria-label="刷新">
-        &#x21bb;
-      </button>
-    </div>
-
-    <!-- Statistics Table -->
-    <div class="card table-card">
-      <div class="card-header">
-        <span>📊 区域蓄积统计</span>
-        <span class="badge-count" id="rowCount">0 条记录</span>
-      </div>
-
-      <div class="card-body" style="padding: 0;">
-        <div class="table-wrapper">
-          <table>
-            <thead>
-              <tr>
-                <th title="行政区的名称">区域名称</th>
-                <th class="text-right" title="该区域内的调查样地数量">样地数</th>
-                <th class="text-right" title="该区域内所有样地的树木总数量">树木数</th>
-                <th class="text-right" title="通过实地测量计算得到的蓄积量，单位立方米">实测蓄积 (m³)</th>
-                <th class="text-right" title="通过AI模型预测的蓄积量，单位立方米">预测蓄积 (m³)</th>
-                <th class="text-right" title="实测蓄积与预测蓄积之间的平均差异，单位立方米；越接近0表示预测越准确">平均误差 (m³)</th>
-              </tr>
-            </thead>
-            <tbody id="statsTableBody"></tbody>
-          </table>
+      <!-- Summary Cards -->
+      <div class="stats-summary" id="statsSummary">
+        <div class="stat-card" title="当前筛选条件下统计的行政区数量">
+          <div class="stat-card-label">区域总数</div>
+          <div class="stat-card-value" id="statRegionCount">--</div>
         </div>
-
-        <!-- Empty State -->
-        <div class="empty-state-wrapper hidden" id="statsEmpty">
-          <div class="empty-icon">📭</div>
-          <p>暂无统计数据</p>
-          <p style="font-size:0.82rem;">请选择区域或等待数据加载</p>
+        <div class="stat-card" title="当前筛选区域内的样地总数量">
+          <div class="stat-card-label">样地总数</div>
+          <div class="stat-card-value" id="statPlotCount">--</div>
+        </div>
+        <div class="stat-card" title="通过实地测量计算得到的蓄积量总和，单位立方米">
+          <div class="stat-card-label">实测蓄积</div>
+          <div class="stat-card-value" id="statMeasuredVolume">-- <small>m³</small></div>
+        </div>
+        <div class="stat-card" title="通过AI模型预测的蓄积量总和，单位立方米">
+          <div class="stat-card-label">预测蓄积</div>
+          <div class="stat-card-value" id="statPredictedVolume">-- <small>m³</small></div>
         </div>
       </div>
-    </div>
+
+      <!-- Toolbar: Region Filter + Refresh -->
+      <div class="toolbar">
+        <div class="toolbar-left">
+          <span class="toolbar-label">选择区域：</span>
+          <select class="select-control" id="regionFilter" title="选择特定行政区查看该区域的详细统计数据">
+            <option value="all">全部区域</option>
+          </select>
+        </div>
+        <button class="btn-icon" id="btnRefresh" title="重新加载统计数据" aria-label="刷新">
+          &#x21bb;
+        </button>
+      </div>
+
+      <!-- Statistics Table -->
+      <div class="card table-card">
+        <div class="card-header">
+          <span>区域蓄积统计</span>
+          <span class="badge-count" id="rowCount">0 条记录</span>
+        </div>
+
+        <div class="card-body" style="padding: 0;">
+          <div class="table-wrapper">
+            <table>
+              <thead>
+                <tr>
+                  <th title="行政区的名称">区域名称</th>
+                  <th class="text-right" title="该区域内的调查样地数量">样地数</th>
+                  <th class="text-right" title="该区域内所有样地的树木总数量">树木数</th>
+                  <th class="text-right" title="通过实地测量计算得到的蓄积量，单位立方米">实测蓄积 (m³)</th>
+                  <th class="text-right" title="通过AI模型预测的蓄积量，单位立方米">预测蓄积 (m³)</th>
+                  <th class="text-right" title="实测蓄积与预测蓄积之间的平均差异，单位立方米；越接近0表示预测越准确">平均误差 (m³)</th>
+                </tr>
+              </thead>
+              <tbody id="statsTableBody"></tbody>
+            </table>
+          </div>
+
+          <!-- Empty State -->
+          <div class="empty-state-wrapper hidden" id="statsEmpty">
+            <div class="empty-icon">📭</div>
+            <p>暂无统计数据</p>
+            <p style="font-size:0.82rem;">请选择区域或等待数据加载</p>
+          </div>
+        </div>
+      </div>
+
+
 
     <!-- AI Prediction Section -->
     <div class="card prediction-card">

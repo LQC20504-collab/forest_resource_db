@@ -21,6 +21,11 @@ FORM_FACTOR_BY_SPECIES = {
 }
 
 
+@app.route('/health', methods=['GET'])
+def health():
+    return jsonify({'status': 'ok', 'service': 'forest-resource-ai'})
+
+
 @app.route('/predict', methods=['POST'])
 def predict():
     data = request.get_json()

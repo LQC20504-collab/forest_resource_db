@@ -31,6 +31,11 @@ public class PlotService {
         return (Page<Plot>) plotMapper.findAll();
     }
 
+    public List<Plot> findAllForMap() {
+        log.debug("查询样地全部数据（地图用）");
+        return plotMapper.findAll();
+    }
+
     public Plot findById(Long id) {
         log.debug("查询样地: id={}", id);
         Plot plot = plotMapper.findById(id);
