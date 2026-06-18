@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>操作日志 — AI森林资源调查数据库</title>
+<link rel="stylesheet" href="css/style.css">
+<style>
+/* ===== operation-logs.html — Page-Specific Styles ===== */
+
+.operation-logs-page .navbar {
+  background: rgba(27, 67, 50, 0.92);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  box-shadow: 0 1px 8px rgba(0, 0, 0, 0.06);
+}
+
+.main {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: var(--space-8) var(--space-6);
+}
+
+/* --- Filter bar --- */
+.filter-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: var(--space-6);
+  flex-wrap: wrap;
+}
+
+.filter-tabs {
+  display: flex;
+  gap: 2px;
+  background: var(--color-bg);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--color-border-light);
+  overflow: hidden;
+}
+
+.filter-tabs .filter-btn {
+  padding: 8px 20px;
+  border: none;
+  background: transparent;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  font-family: var(--font-family);
+  white-space: nowrap;
+}
+
+.filter-tabs .filter-btn:hover {
+  color: var(--color-primary);
+  background: rgba(44,110,73,0.04);
+}
+
+.filter-tabs .filter-btn.active {
+  color: var(--color-primary-dark);
+  background: var(--color-surface);
+  font-weight: 600;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+}
+
+.filter-input-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.filter-input-group .form-control {
+  width: 180px;
+  padding: 8px 12px;
+}
+
+.filter-input-group .btn {
+  flex-shrink: 0;
+}
+
+/* --- Table container (card wrapping table + pagination) --- */
+.table-container {
+  background: var(--color-surface);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+  overflow: hidden;
+}
+
+/* --- Loading row --- */
+.loading-row td {
+  text-align: center;
+  padding: 32px;
+}
+
+/* --- Empty state --- */
+.empty-state {
+  text-align: center;
+  padding: 48px 24px;
+  color: var(--color-text-muted);
+}
+.empty-state p {
+  font-size: 14px;
+}
+
+/* --- Monospace IDs --- */
+td.mono-id {
+  font-family: var(--font-mono);
+  font-size: 13px;
+}
+
+td.log-detail {
+  max-width: 360px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* --- Toast notifications --- */
+.toast-container {
+  position: fixed;
+  top: 72px;
+  right: 24px;
+  z-index: 300;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.toast {
+  padding: 12px 20px;
+  border-radius: var(--radius-md);
+  font-size: 14px;
+  font-weight: 500;
+  box-shadow: var(--shadow-lg);
+  animation: slideIn 0.3s ease;
+  max-width: 380px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.toast-success {
+  background: #ecfdf5;
+  color: #065f46;
+  border: 1px solid #a7f3d0;
+}
+.toast-error {
+  background: #fef2f2;
+  color: #991b1b;
+  border: 1px solid #fecaca;
+}
+.toast-warning {
+  background: #fffbeb;
+  color: #92400e;
+  border: 1px solid #fde68a;
+}
+@keyframes slideIn {
+  from { opacity: 0; transform: translateX(30px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+/* --- Pagination --- */
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px;
+  border-top: 1px solid var(--color-border-light);
+}
+.pagination-info {
+  font-size: 13px;
+  color: var(--color-text-secondary);
+}
+.pagination-controls {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.pagination-btn {
+  padding: 6px 12px;
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  color: var(--color-text);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  min-width: 36px;
+  text-align: center;
+}
+.pagination-btn:hover:not(:disabled) {
+  background: var(--color-primary-pale);
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+}
+.pagination-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+.pagination-btn.active {
+  background: var(--color-primary);
+  color: #fff;
+  border-color: var(--color-primary);
+  font-weight: 600;
+}
+.pagination-ellipsis {
+  padding: 0 4px;
+  color: var(--color-text-muted);
+  font-size: 13px;
+}
+
+/* --- Responsive --- */
+@media (max-width: 768px) {
+  .main { padding: var(--space-6) var(--space-4); }
+  .filter-bar { flex-direction: column; align-items: stretch; }
+  .filter-input-group .form-control { width: 100%; }
+  td.log-detail { max-width: 200px; }
+}
+</style>
+</head>
+<body class="operation-logs-page">
+
+<!-- ===== NAVBAR ===== -->
+<nav class="navbar">
+  <a href="dashboard.html" class="navbar-brand">
+    <span class="logo-icon">&#9730;</span>
+    <span>AI森林资源调查系统</span>
+  </a>
+  <div class="navbar-nav">
+    <a href="dashboard.html">仪表盘</a>
+    <a href="plots.html">样地管理</a>
+    <a href="map.html">样地地图</a>
+    <a href="statistics.html">分区统计</a>
+    <a href="admin-regions.html">行政区管理</a>
+    <a href="admin-species.html">树种管理</a>
+    <a href="models.html">模型目录</a>
+    <a href="operation-logs.html" class="active">操作日志</a>
+  </div>
+  <div class="navbar-user">
+    <span id="navbarUsername">用户</span>
+    <button class="btn-logout" id="btnLogout" onclick="handleLogout()">退出登录</button>
+  </div>
+</nav>
+
+<!-- ===== MAIN ===== -->
+<main class="main">
+  <div class="page-header">
+    <h1>操作日志</h1>
+    <p>查看系统操作审计日志 — 全部操作记录或按用户查询</p>
+  </div>
+
+  <!-- Filter Bar -->
+  <div class="filter-bar" id="filterBar">
+    <div class="filter-tabs">
+      <button class="filter-btn active" data-mode="all" onclick="switchFilterMode('all')">全部日志</button>
+      <button class="filter-btn" data-mode="user" onclick="switchFilterMode('user')">按用户查询</button>
+    </div>
+    <div class="filter-input-group hidden" id="userFilterInput">
+      <input type="text" id="userIdInput" class="form-control" placeholder="输入用户ID">
+      <button class="btn btn-primary" id="btnUserQuery" onclick="queryByUser()">查询</button>
+    </div>
+  </div>
+
+  <!-- Table -->
+  <div class="table-container">
+    <div class="table-wrapper">
+      <table>
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>用户ID</th>
+            <th>操作类型</th>
+            <th>操作详情</th>
+            <th>操作时间</th>
+          </tr>
+        </thead>
+        <tbody id="logTableBody">
+          <tr class="loading-row">
+            <td colspan="5">
+              <div class="spinner"></div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Pagination -->
+    <div class="pagination" id="pagination">
+      <div class="pagination-info">
+        <span id="paginationInfo">加载中...</span>
+      </div>
+      <div class="pagination-controls" id="paginationControls">
+        <!-- Dynamically rendered -->
+      </div>
+    </div>
+  </div>
+</main>
+
+<!-- ===== TOAST ===== -->
+<div class="toast-container" id="toastContainer"></div>
+
+<script src="js/operation-logs.js"></script>
+</body>
+</html>

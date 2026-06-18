@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>模型目录 — AI森林资源调查数据库</title>
+<link rel="stylesheet" href="css/style.css">
+<style>
+/* ===== models.html — Page-Specific Styles ===== */
+
+/* --- Navbar --- */
+.models-page .navbar {
+  background: rgba(27, 67, 50, 0.92);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  box-shadow: 0 1px 8px rgba(0, 0, 0, 0.06);
+}
+
+/* --- Layout --- */
+.main {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: var(--space-8) var(--space-6);
+}
+
+/* --- Model detail card --- */
+.model-card-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.model-card {
+  border: 1px solid var(--color-border-light);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+  padding: var(--space-5) var(--space-6);
+  box-shadow: var(--shadow-sm);
+  transition: box-shadow var(--transition-normal);
+}
+
+.model-card:hover {
+  box-shadow: var(--shadow-md);
+}
+
+.model-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-3);
+}
+
+.model-card-name {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--color-primary-dark);
+}
+
+.model-card-algo {
+  font-size: 0.82rem;
+  padding: 3px 10px;
+  background: var(--color-primary-pale);
+  color: var(--color-primary-dark);
+  border-radius: 20px;
+  font-weight: 600;
+}
+
+.model-card-body {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px 24px;
+  margin-bottom: var(--space-3);
+}
+
+.model-metric {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  font-size: 0.85rem;
+}
+
+.model-metric-label {
+  color: var(--color-text-muted);
+  font-weight: 500;
+  min-width: 36px;
+}
+
+.model-metric-value {
+  font-family: var(--font-mono);
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.model-metric-value.high-r2 {
+  color: var(--color-primary);
+}
+
+.model-metric-value.medium-r2 {
+  color: var(--color-warning);
+}
+
+.model-metric-value.low-r2 {
+  color: var(--color-error);
+}
+
+/* --- Feature tags --- */
+.model-card-features {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--color-border-light);
+}
+
+.feature-label {
+  font-size: 0.78rem;
+  color: var(--color-text-muted);
+  font-weight: 500;
+  margin-right: 4px;
+}
+
+.feature-tag {
+  font-size: 0.78rem;
+  background: #f0eeea;
+  color: var(--color-text-secondary);
+  padding: 2px 10px;
+  border-radius: 20px;
+  font-weight: 500;
+}
+
+/* --- Empty state --- */
+.empty-state {
+  text-align: center;
+  padding: 64px 24px;
+  color: var(--color-text-muted);
+}
+
+.empty-state p {
+  font-size: 14px;
+}
+
+/* --- Loading row --- */
+.loading-state {
+  text-align: center;
+  padding: 48px;
+}
+
+/* --- ID badge --- */
+.model-id-badge {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+  background: var(--color-bg);
+  padding: 2px 8px;
+  border-radius: var(--radius-sm);
+}
+
+.model-card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--color-border-light);
+  margin-top: var(--space-2);
+}
+
+.model-card-date {
+  font-size: 0.78rem;
+  color: var(--color-text-muted);
+}
+
+/* --- Responsive --- */
+@media (max-width: 768px) {
+  .model-card-body {
+    grid-template-columns: 1fr;
+  }
+  .main {
+    padding: var(--space-6) var(--space-4);
+  }
+  .model-card-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+}
+</style>
+</head>
+<body class="models-page">
+
+<!-- ===== NAVBAR ===== -->
+<nav class="navbar">
+  <a href="dashboard.html" class="navbar-brand">
+    <span class="logo-icon">&#9730;</span>
+    <span>AI森林资源调查系统</span>
+  </a>
+  <div class="navbar-nav">
+    <a href="dashboard.html">仪表盘</a>
+    <a href="plots.html">样地管理</a>
+    <a href="map.html">样地地图</a>
+    <a href="statistics.html">分区统计</a>
+    <a href="admin-regions.html">行政区管理</a>
+    <a href="admin-species.html">树种管理</a>
+    <a href="models.html" class="active">模型目录</a>
+    <a href="operation-logs.html">操作日志</a>
+  </div>
+  <div class="navbar-user">
+    <span id="navbarUsername">用户</span>
+    <button class="btn-logout" id="btnLogout" onclick="handleLogout()">退出登录</button>
+  </div>
+</nav>
+
+<!-- ===== MAIN ===== -->
+<main class="main">
+  <div class="page-header">
+    <h1>模型目录</h1>
+    <p>查看AI蓄积量预测模型的性能指标与特征信息 — 只读</p>
+  </div>
+
+  <div class="table-container">
+    <div class="table-wrapper">
+      <div id="modelListContainer">
+        <div class="loading-state">
+          <div class="spinner"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<!-- ===== TOAST ===== -->
+<div class="toast-container" id="toastContainer"></div>
+
+<script src="js/models.js"></script>
+</body>
+</html>
