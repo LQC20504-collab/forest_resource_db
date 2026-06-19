@@ -5,6 +5,9 @@
 
 USE forest_resource;
 
+-- 重要: 执行前请确保客户端字符集为 utf8mb4，否则触发器中的中文会乱码
+-- 在 mysql CLI 中执行: SET NAMES utf8mb4;  SOURCE advanced.sql;
+
 -- ============================================================
 -- 1. 存储过程：指定行政区蓄积量汇总
 -- sp_region_volume_summary(IN rid BIGINT)
@@ -27,15 +30,25 @@ BEGIN
     LEFT JOIN (
         SELECT t.plot_id,
                COUNT(DISTINCT t.tree_id) AS tree_count,
-               SUM(v.measured_volume) AS measured_volume
+               SUM(lv.measured_volume) AS measured_volume
         FROM tree t
-        LEFT JOIN volume v ON t.tree_id = v.tree_id
+        LEFT JOIN (
+            SELECT v.tree_id, v.measured_volume
+            FROM volume v
+            INNER JOIN (
+                SELECT tree_id, MAX(measure_date) AS max_date
+                FROM volume GROUP BY tree_id
+            ) m ON v.tree_id = m.tree_id AND v.measure_date = m.max_date
+        ) lv ON t.tree_id = lv.tree_id
         GROUP BY t.plot_id
     ) m ON p.plot_id = m.plot_id
     LEFT JOIN (
-        SELECT plot_id, SUM(predicted_volume) AS predicted_volume
-        FROM ai_prediction
-        GROUP BY plot_id
+        SELECT ap.plot_id, ap.predicted_volume
+        FROM ai_prediction ap
+        INNER JOIN (
+            SELECT plot_id, MAX(predict_time) AS max_time
+            FROM ai_prediction GROUP BY plot_id
+        ) latest ON ap.plot_id = latest.plot_id AND ap.predict_time = latest.max_time
     ) pr ON p.plot_id = pr.plot_id
     WHERE r.region_id = rid
     GROUP BY r.region_id, r.name;
@@ -63,15 +76,25 @@ BEGIN
     LEFT JOIN (
         SELECT t.plot_id,
                COUNT(DISTINCT t.tree_id) AS tree_count,
-               SUM(v.measured_volume) AS measured_volume
+               SUM(lv.measured_volume) AS measured_volume
         FROM tree t
-        LEFT JOIN volume v ON t.tree_id = v.tree_id
+        LEFT JOIN (
+            SELECT v.tree_id, v.measured_volume
+            FROM volume v
+            INNER JOIN (
+                SELECT tree_id, MAX(measure_date) AS max_date
+                FROM volume GROUP BY tree_id
+            ) m ON v.tree_id = m.tree_id AND v.measure_date = m.max_date
+        ) lv ON t.tree_id = lv.tree_id
         GROUP BY t.plot_id
     ) m ON p.plot_id = m.plot_id
     LEFT JOIN (
-        SELECT plot_id, SUM(predicted_volume) AS predicted_volume
-        FROM ai_prediction
-        GROUP BY plot_id
+        SELECT ap.plot_id, ap.predicted_volume
+        FROM ai_prediction ap
+        INNER JOIN (
+            SELECT plot_id, MAX(predict_time) AS max_time
+            FROM ai_prediction GROUP BY plot_id
+        ) latest ON ap.plot_id = latest.plot_id AND ap.predict_time = latest.max_time
     ) pr ON p.plot_id = pr.plot_id
     GROUP BY r.region_id, r.name
     ORDER BY r.region_id;
@@ -115,15 +138,25 @@ LEFT JOIN plot p ON r.region_id = p.region_id
 LEFT JOIN (
     SELECT t.plot_id,
            COUNT(DISTINCT t.tree_id) AS tree_count,
-           SUM(v.measured_volume) AS measured_volume
+           SUM(lv.measured_volume) AS measured_volume
     FROM tree t
-    LEFT JOIN volume v ON t.tree_id = v.tree_id
+    LEFT JOIN (
+        SELECT v.tree_id, v.measured_volume
+        FROM volume v
+        INNER JOIN (
+            SELECT tree_id, MAX(measure_date) AS max_date
+            FROM volume GROUP BY tree_id
+        ) m ON v.tree_id = m.tree_id AND v.measure_date = m.max_date
+    ) lv ON t.tree_id = lv.tree_id
     GROUP BY t.plot_id
 ) m ON p.plot_id = m.plot_id
 LEFT JOIN (
-    SELECT plot_id, SUM(predicted_volume) AS predicted_volume
-    FROM ai_prediction
-    GROUP BY plot_id
+    SELECT ap.plot_id, ap.predicted_volume
+    FROM ai_prediction ap
+    INNER JOIN (
+        SELECT plot_id, MAX(predict_time) AS max_time
+        FROM ai_prediction GROUP BY plot_id
+    ) latest ON ap.plot_id = latest.plot_id AND ap.predict_time = latest.max_time
 ) pr ON p.plot_id = pr.plot_id
 GROUP BY r.region_id, r.name;
 
@@ -143,13 +176,23 @@ LEFT JOIN region r ON p.region_id = r.region_id
 LEFT JOIN (
     SELECT t.plot_id,
            COUNT(DISTINCT t.tree_id) AS tree_count,
-           SUM(v.measured_volume) AS measured_volume
+           SUM(lv.measured_volume) AS measured_volume
     FROM tree t
-    LEFT JOIN volume v ON t.tree_id = v.tree_id
+    LEFT JOIN (
+        SELECT v.tree_id, v.measured_volume
+        FROM volume v
+        INNER JOIN (
+            SELECT tree_id, MAX(measure_date) AS max_date
+            FROM volume GROUP BY tree_id
+        ) m ON v.tree_id = m.tree_id AND v.measure_date = m.max_date
+    ) lv ON t.tree_id = lv.tree_id
     GROUP BY t.plot_id
 ) m ON p.plot_id = m.plot_id
 LEFT JOIN (
-    SELECT plot_id, SUM(predicted_volume) AS predicted_volume
-    FROM ai_prediction
-    GROUP BY plot_id
+    SELECT ap.plot_id, ap.predicted_volume
+    FROM ai_prediction ap
+    INNER JOIN (
+        SELECT plot_id, MAX(predict_time) AS max_time
+        FROM ai_prediction GROUP BY plot_id
+    ) latest ON ap.plot_id = latest.plot_id AND ap.predict_time = latest.max_time
 ) pr ON p.plot_id = pr.plot_id;
