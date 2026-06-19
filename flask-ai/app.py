@@ -51,17 +51,20 @@ def predict():
         dbh = t['dbh']
         height = t['height']
 
-        if model_id == 1:
-            form_factor = 0.48
-            vol = 0.00007854 * (dbh ** 2) * height * form_factor
-            noise = random.gauss(0, 0.03 * vol)
-            vol += noise
+        # 二元材积公式: V = 0.00005 × dbh² × height × 形数
+        # 形数约 0.38~0.52，使用树种对应形数（若无则取 0.46）
+        species_id = t.get('species_id', None)
+        if species_id and species_id in FORM_FACTOR_BY_SPECIES:
+            form_factor = FORM_FACTOR_BY_SPECIES[species_id]
         else:
-            form_factor = 0.48 - (species_count - 1) * 0.02
-            form_factor = max(0.38, min(0.55, form_factor))
-            vol = 0.00007854 * (dbh ** 2) * height * form_factor
-            noise = random.gauss(0, 0.06 * vol)
-            vol += noise
+            form_factor = 0.46
+
+        # 基础材积
+        vol = 0.00005 * (dbh ** 2) * height * form_factor
+
+        # 模型预测在实测基础上加微小随机偏差（±5%），模拟模型合理误差
+        noise_pct = random.gauss(0, 0.03)  # 标准差3%
+        vol = vol * (1 + noise_pct)
 
         total_volume += max(vol, 0.01)
 
