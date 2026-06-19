@@ -230,9 +230,22 @@ td.region-name {
             <span class="field-error">请输入区域名称</span>
           </div>
           <div class="form-group">
+            <label for="formRegionCode">行政区代码 *</label>
+            <input type="text" id="formRegionCode" required maxlength="20" placeholder="例如: 330000">
+            <span class="field-error">请输入行政区代码</span>
+          </div>
+          <div class="form-group">
             <label for="formParentRegion">父级区域</label>
-            <select id="formParentRegion">
+            <select id="formParentRegion" onchange="window.onParentChange()">
               <option value="">（无 — 顶级区域）</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="formLevel">层级 *</label>
+            <select id="formLevel" onchange="window.onLevelChange()">
+              <option value="1">Lv.1 — 省级</option>
+              <option value="2">Lv.2 — 市级</option>
+              <option value="3">Lv.3 — 区县级</option>
             </select>
           </div>
         </div>

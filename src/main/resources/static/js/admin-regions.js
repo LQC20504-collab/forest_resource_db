@@ -127,7 +127,7 @@
   }
 
   function getParentName(region) {
-    if (!region.parentId) return '（顶级区域）';
+    if (!region.parentId) return '—';
     return regionMap[region.parentId] || ('区域-' + region.parentId);
   }
 
@@ -180,11 +180,52 @@
     });
   }
 
+  function getLevelLabel(level) {
+    if (level === 1) return 'Lv.1 — 省级';
+    if (level === 2) return 'Lv.2 — 市级';
+    if (level === 3) return 'Lv.3 — 区县级';
+    return 'Lv.' + level;
+  }
+
+  function autoSuggestLevel() {
+    var parentId = document.getElementById('formParentRegion').value;
+    var suggested;
+    if (!parentId) {
+      suggested = 1;
+    } else {
+      var parent = null;
+      for (var i = 0; i < regions.length; i++) {
+        if (regions[i].regionId == parentId) {
+          parent = regions[i];
+          break;
+        }
+      }
+      suggested = parent ? (parent.level || 1) + 1 : 2;
+    }
+    /* Only auto-set if current selection is not manually changed */
+    var $level = document.getElementById('formLevel');
+    if (!$level.dataset.userChanged) {
+      $level.value = Math.min(suggested, 3);
+    }
+    return suggested;
+  }
+
+  window.onParentChange = function () {
+    autoSuggestLevel();
+  };
+
+  window.onLevelChange = function () {
+    document.getElementById('formLevel').dataset.userChanged = 'true';
+  };
+
   window.openCreateModal = function () {
     isEditMode = false;
     document.getElementById('formRegionId').value = '';
     document.getElementById('formRegionName').value = '';
+    document.getElementById('formRegionCode').value = '';
     document.getElementById('formParentRegion').value = '';
+    document.getElementById('formLevel').value = '1';
+    document.getElementById('formLevel').dataset.userChanged = '';
     clearFormErrors();
     document.getElementById('formModalTitle').textContent = '新建区域';
     document.getElementById('formSubmitBtn').textContent = '保存';
@@ -206,7 +247,11 @@
     isEditMode = true;
     document.getElementById('formRegionId').value = region.regionId;
     document.getElementById('formRegionName').value = region.name || '';
+    document.getElementById('formRegionCode').value = region.regionCode || '';
     document.getElementById('formParentRegion').value = region.parentId || '';
+    var $level = document.getElementById('formLevel');
+    $level.value = region.level || 1;
+    $level.dataset.userChanged = 'true';
     clearFormErrors();
     document.getElementById('formModalTitle').textContent = '编辑区域 — ' + escapeHtml(region.name);
     document.getElementById('formSubmitBtn').textContent = '更新';
@@ -217,11 +262,14 @@
     document.getElementById('formModalOverlay').classList.remove('active');
     isEditMode = false;
     clearFormErrors();
+    document.getElementById('formLevel').dataset.userChanged = '';
   };
 
   function clearFormErrors() {
     var $name = document.getElementById('formRegionName');
     if ($name) $name.classList.remove('error');
+    var $code = document.getElementById('formRegionCode');
+    if ($code) $code.classList.remove('error');
   }
 
   function validateForm() {
@@ -233,18 +281,27 @@
     } else {
       $name.classList.remove('error');
     }
+    var $code = document.getElementById('formRegionCode');
+    if (!$code || !$code.value.trim()) {
+      if ($code) $code.classList.add('error');
+      valid = false;
+    } else {
+      $code.classList.remove('error');
+    }
     return valid;
   }
 
   window.handleFormSubmit = function () {
     if (!validateForm()) {
-      showToast('warning', '请填写区域名称');
+      showToast('warning', '请填写区域名称和行政区代码');
       return;
     }
     var formData = {
       name: document.getElementById('formRegionName').value.trim(),
+      regionCode: document.getElementById('formRegionCode').value.trim(),
       parentId: document.getElementById('formParentRegion').value
-        ? Number(document.getElementById('formParentRegion').value) : null
+        ? Number(document.getElementById('formParentRegion').value) : null,
+      level: Number(document.getElementById('formLevel').value)
     };
     var $btn = document.getElementById('formSubmitBtn');
     if ($btn) { $btn.disabled = true; $btn.textContent = '保存中...'; }

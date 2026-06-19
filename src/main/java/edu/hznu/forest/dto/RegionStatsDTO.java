@@ -11,6 +11,7 @@ import java.math.BigDecimal;
 public class RegionStatsDTO {
     private Long regionId;
     private String regionName;
+    private Integer regionLevel;
     private Integer plotCount;
     private Integer treeCount;
     private BigDecimal totalMeasuredVolume;

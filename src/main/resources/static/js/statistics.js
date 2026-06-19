@@ -198,7 +198,11 @@
     regions.forEach(function(region) {
       var option = document.createElement('option');
       option.value = region.regionId || region.id;
-      option.textContent = region.regionName || region.name || ('区域-' + (region.regionId || region.id));
+      var levelTag = '';
+      if (region.level === 1) levelTag = '[省级] ';
+      else if (region.level === 2) levelTag = '[市级] ';
+      else if (region.level === 3) levelTag = '[区县] ';
+      option.textContent = levelTag + (region.regionName || region.name || ('区域-' + (region.regionId || region.id)));
       $regionFilter.appendChild(option);
     });
   }
