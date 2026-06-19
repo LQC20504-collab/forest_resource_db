@@ -109,6 +109,27 @@
    * @param {Array} regionData - array of {regionName, plotCount, treeCount, totalMeasuredVolume, totalPredictedVolume}
    * @param {string} mode - 'volume' | 'plots' | 'trees'
    */
+  /** Get level label for display */
+  function getLevelLabel(level) {
+    if (level === 1) return '省级';
+    if (level === 2) return '市级';
+    if (level === 3) return '区县';
+    return 'Lv' + (level || '?');
+  }
+
+  /** Get bar color by level */
+  function getLevelColor(level, shade) {
+    shade = shade || 0;
+    var palette = {
+      1: ['#1b4332', '#2d6a4f', '#40916c'], /* Province: dark forest green */
+      2: ['#2c6e49', '#3e8e5c', '#52ae70'], /* City: medium green */
+      3: ['#4c956c', '#68b082', '#84ca98'], /* District: light green */
+      4: ['#74a57f', '#90be99', '#acd7b3']  /* Other: pale green */
+    };
+    var colors = palette[level] || palette[4];
+    return colors[shade % colors.length];
+  }
+
   function renderBarChart(regionData, mode) {
     mode = mode || barChartMode;
     barChartMode = mode;
@@ -116,7 +137,7 @@
     var el = document.getElementById('barChart');
     if (!el) return;
 
-    /* Dispose previous instance to avoid memory leaks */
+    /* Dispose previous instance */
     if (barChartInstance) {
       barChartInstance.dispose();
     }
@@ -126,86 +147,97 @@
       return;
     }
 
+    /* Filter out regions with no data (empty provinces) */
+    var hasData = function (r) {
+      return (r.plotCount && r.plotCount > 0) ||
+             (r.totalMeasuredVolume && Number(r.totalMeasuredVolume) > 0) ||
+             (r.totalPredictedVolume && Number(r.totalPredictedVolume) > 0);
+    };
+    var filteredData = regionData.filter(hasData);
+
+    if (filteredData.length === 0) {
+      el.innerHTML = '<p class="text-muted text-center" style="padding-top:120px;">暂无有效区域数据</p>';
+      return;
+    }
+
     barChartInstance = echarts.init(el);
 
-    var regions = regionData.map(function (r) { return r.regionName || '未知'; });
+    /* Build x-axis labels */
+    var regions = filteredData.map(function (r) {
+      return r.regionName || '未知';
+    });
 
-    var series, yAxisName, legendData;
+    var series, yAxisName, legendItems, tooltipFormatter;
 
     if (mode === 'volume') {
-      /* Side-by-side: measured vs predicted */
-      var measured  = regionData.map(function (r) { return (r.totalMeasuredVolume  != null) ? Number(r.totalMeasuredVolume)  : 0; });
-      var predicted = regionData.map(function (r) { return (r.totalPredictedVolume != null) ? Number(r.totalPredictedVolume) : 0; });
+      /* Side-by-side: measured vs predicted, color-coded by level */
+      var measured  = filteredData.map(function (r) { return (r.totalMeasuredVolume  != null) ? Number(r.totalMeasuredVolume)  : 0; });
+      var predicted = filteredData.map(function (r) { return (r.totalPredictedVolume != null) ? Number(r.totalPredictedVolume) : 0; });
       yAxisName = '蓄积量 (m³)';
-      legendData = ['实测蓄积量', '预测蓄积量'];
-      series = [
-        {
-          name: '实测蓄积量',
-          type: 'bar',
-          data: measured,
-          itemStyle: {
-            color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-              { offset: 0, color: '#2c6e49' },
-              { offset: 1, color: '#4c956c' }
-            ]),
-            borderRadius: [4, 4, 0, 0]
-          },
-          barWidth: regionData.length > 5 ? 18 : 28,
-          barGap: '20%',
-          emphasis: { itemStyle: { color: '#2c6e49' } }
-        },
-        {
-          name: '预测蓄积量',
-          type: 'bar',
-          data: predicted,
-          itemStyle: {
-            color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-              { offset: 0, color: '#3498db' },
-              { offset: 1, color: '#5dade2' }
-            ]),
-            borderRadius: [4, 4, 0, 0]
-          },
-          barWidth: regionData.length > 5 ? 18 : 28,
-          emphasis: { itemStyle: { color: '#3498db' } }
-        }
+      legendItems = [
+        { name: '实测蓄积量', itemStyle: { color: '#2c6e49' } },
+        { name: '预测蓄积量', itemStyle: { color: '#3498db' } }
       ];
+
+      /* Build bar items with series-level colors matching legend */
+      var measuredBars = {
+        name: '实测蓄积量',
+        type: 'bar',
+        data: filteredData.map(function (r, i) {
+          return {
+            value: Number(r.totalMeasuredVolume != null ? r.totalMeasuredVolume : 0),
+            itemStyle: { color: '#2c6e49' }
+          };
+        }),
+        barWidth: filteredData.length > 5 ? 18 : 28,
+        barGap: '20%'
+      };
+      var predictedBars = {
+        name: '预测蓄积量',
+        type: 'bar',
+        data: filteredData.map(function (r, i) {
+          return {
+            value: Number(r.totalPredictedVolume != null ? r.totalPredictedVolume : 0),
+            itemStyle: { color: '#3498db' }
+          };
+        }),
+        barWidth: filteredData.length > 5 ? 18 : 28,
+        barGap: '20%'
+      };
+      series = [measuredBars, predictedBars];
     } else if (mode === 'plots') {
-      /* Single bar: plot count per region */
-      var plotData = regionData.map(function (r) { return r.plotCount || 0; });
+      /* Single bar: plot count, color by level */
       yAxisName = '样地数';
-      legendData = ['样地数量'];
+      legendItems = [];
       series = [{
         name: '样地数量',
         type: 'bar',
-        data: plotData,
-        itemStyle: {
-          color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-            { offset: 0, color: '#4c956c' },
-            { offset: 1, color: '#74a57f' }
-          ]),
-          borderRadius: [4, 4, 0, 0]
-        },
-        barWidth: regionData.length > 5 ? 18 : 36,
-        emphasis: { itemStyle: { color: '#2c6e49' } }
+        data: filteredData.map(function (r) {
+          return {
+            value: r.plotCount || 0,
+            itemStyle: {
+              color: getLevelColor(r.regionLevel, 0)
+            }
+          };
+        }),
+        barWidth: filteredData.length > 5 ? 18 : 36
       }];
     } else {
-      /* Single bar: tree count per region */
-      var treeData = regionData.map(function (r) { return r.treeCount || 0; });
+      /* Single bar: tree count, color by level */
       yAxisName = '树木数';
-      legendData = ['树木数量'];
+      legendItems = [];
       series = [{
         name: '树木数量',
         type: 'bar',
-        data: treeData,
-        itemStyle: {
-          color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-            { offset: 0, color: '#5dade2' },
-            { offset: 1, color: '#85c1e9' }
-          ]),
-          borderRadius: [4, 4, 0, 0]
-        },
-        barWidth: regionData.length > 5 ? 18 : 36,
-        emphasis: { itemStyle: { color: '#3498db' } }
+        data: filteredData.map(function (r) {
+          return {
+            value: r.treeCount || 0,
+            itemStyle: {
+              color: getLevelColor(r.regionLevel, 0)
+            }
+          };
+        }),
+        barWidth: filteredData.length > 5 ? 18 : 36
       }];
     }
 
@@ -217,6 +249,7 @@
         borderColor: 'transparent',
         textStyle: { color: '#fff', fontSize: 13 },
         formatter: function (params) {
+          if (!params || params.length === 0) return '';
           var tip = '<strong>' + params[0].name + '</strong><br/>';
           params.forEach(function (p) {
             var val = (mode === 'volume') ? p.value.toFixed(2) + ' m³' : p.value;
@@ -226,7 +259,7 @@
         }
       },
       legend: {
-        data: legendData,
+        data: legendItems,
         top: 0,
         textStyle: { color: '#636e72', fontSize: 12 },
         itemWidth: 12,
@@ -246,7 +279,7 @@
         axisLabel: {
           color: '#636e72',
           fontSize: 11,
-          rotate: regions.length > 5 ? 25 : 0,
+          rotate: filteredData.length > 6 ? 30 : 0,
           interval: 0
         },
         axisTick: { alignWithLabel: true },
@@ -500,6 +533,37 @@
     });
   }
 
+  /**
+   * Fetch regions list to get level info, then merge into dashboard data.
+   */
+  function fetchRegionsAndMerge(dashboardData) {
+    var token = getToken();
+    if (!token) return Promise.resolve(dashboardData);
+
+    return fetch('/api/regions', {
+      method: 'GET',
+      headers: { 'Authorization': 'Bearer ' + token }
+    })
+    .then(function (res) { return res.json(); })
+    .then(function (json) {
+      if (json.code === 200 && json.data) {
+        var levelMap = {};
+        json.data.forEach(function (r) {
+          levelMap[r.regionId || r.id] = r.level || 1;
+        });
+        if (dashboardData.regionComparison) {
+          dashboardData.regionComparison.forEach(function (r) {
+            r.regionLevel = levelMap[r.regionId] || 1;
+          });
+        }
+      }
+      return dashboardData;
+    })
+    .catch(function () {
+      return dashboardData;
+    });
+  }
+
   /* ==================================================================
    *  Initialization
    * ================================================================== */
@@ -527,6 +591,9 @@
 
     /* 4. Fetch and render */
     fetchDashboardData()
+      .then(function (data) {
+        return fetchRegionsAndMerge(data);
+      })
       .then(function (data) {
         dashboardData = data;
 

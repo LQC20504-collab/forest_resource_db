@@ -695,8 +695,10 @@
         .then(function (res) { return res.json(); })
         .then(function (data) {
           restoreButtons();
-          if (data.code === 200 && data.data) {
+          if (data.code === 200 && data.data && data.data.length > 0) {
             showPredictResult('预测完成，共 ' + data.data.length + ' 个样地', false);
+          } else if (data.code === 200) {
+            showPredictResult('预测完成，但全部样地预测失败（请检查 Flask 服务及样地数据）', true);
           } else {
             showPredictResult(data.message || '预测失败', true);
           }
@@ -713,12 +715,16 @@
     showPredictResult('正在预测 ' + plots.length + ' 个样地...', false);
 
     var total = plots.length;
-    var completed = 0;
+    var successCount = 0;
 
     function predictNext(index) {
       if (index >= total) {
         restoreButtons();
-        showPredictResult('预测完成：' + completed + '/' + total + ' 个成功', false);
+        if (successCount === 0 && total > 0) {
+          showPredictResult('预测失败：' + total + ' 个样地全部失败（请检查 Flask 服务及样地数据）', true);
+        } else {
+          showPredictResult('预测完成：' + successCount + '/' + total + ' 个成功', false);
+        }
         showProgress(null, null, false);
         return;
       }
@@ -732,8 +738,8 @@
         .then(handleUnauthorized)
         .then(function (res) { return res.json(); })
         .then(function (data) {
-          completed++;
           if (data.code === 200 && data.data) {
+            successCount++;
             updatePlotItemResult(plot.plotId, data.data);
           } else {
             updatePlotItemResult(plot.plotId, null);
@@ -741,7 +747,6 @@
           predictNext(index + 1);
         })
         .catch(function () {
-          completed++;
           updatePlotItemResult(plot.plotId, null);
           predictNext(index + 1);
         });
